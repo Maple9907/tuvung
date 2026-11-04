@@ -76,7 +76,7 @@ const gg=new T.BufferGeometry();gg.setAttribute('position',new T.BufferAttribute
 /* Điểm sáng tròn, mờ dần ra rìa (thay cho ô vuông của PointsMaterial); kích thước riêng cho từng sao */
 const gm=new T.ShaderMaterial({uniforms:{k:{value:600}},transparent:true,depthWrite:false,blending:T.AdditiveBlending,
  vertexShader:'attribute vec3 aCol;attribute float aSize;varying vec3 vc;uniform float k;void main(){vc=aCol;vec4 m=modelViewMatrix*vec4(position,1.);gl_PointSize=max(aSize*k/-m.z,1.5);gl_Position=projectionMatrix*m;}',
- fragmentShader:'varying vec3 vc;void main(){float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;gl_FragColor=vec4(vc,pow(1.-d,1.6));#include <colorspace_fragment>\n}'});
+ fragmentShader:'varying vec3 vc;void main(){float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;gl_FragColor=vec4(vc,pow(1.-d,1.6));\n#include <colorspace_fragment>\n}'});
 gal.add(new T.Points(gg,gm));gal.rotation.x=.5;rs();addEventListener('resize',()=>{rs();if(gal.visible)cam.position.z=zf});
 const WH=new T.Color(0xffffff);
 /* chưa học: chấm mờ nhỏ · đang học: sáng, to hơn · thuộc lòng: rất sáng, hơi ngả trắng */
