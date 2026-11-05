@@ -11,6 +11,8 @@
 - **Âm thanh hiệu ứng** tự tạo bằng code (đúng/sai, combo, lật thẻ, hoàn thành, lên cấp), tắt/bật trong mục Tôi.
 - **Điểm kinh nghiệm, chuỗi ngày học và cấp độ** để giữ động lực.
 - **Bảng xếp hạng**: đăng nhập bằng Google hoặc email để đồng bộ tiến độ giữa các thiết bị và thi đua cùng mọi người.
-- **Cài như một app**: thêm vào màn hình chính, mở toàn màn hình, dùng offline.
+- **Nhạc nền**: nhạc êm tự tạo bằng code (không cần file mp3, chạy offline). Nút 🎵 trên thanh trên để bật/tắt, chỉnh âm lượng trong Tôi → Âm thanh. Nhạc bắt đầu sau lần chạm đầu tiên (quy định của trình duyệt) và tự tạm dừng khi bạn thoát khỏi app.
+- **Cài về máy**: nút "⬇ Cài về máy" trên thanh trên (tự ẩn khi đã cài). Android/Chrome cài trực tiếp; iPhone hiện hướng dẫn Safari → Chia sẻ → Thêm vào MH chính. Cần mở bằng https.
+- **Giao diện gọn cho điện thoại**: mỗi màn hình vừa khít một khung hình, thẻ học tự co theo chiều cao màn hình, mục Tôi chia thành 4 tab (Học, Âm thanh, Tài khoản, Xếp hạng).
 
 Chưa đăng nhập vẫn học bình thường, tiến độ được lưu ngay trên máy.

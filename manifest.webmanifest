@@ -1,6 +1,11 @@
 {
-  "name": "H\u1ecdc T\u1eeb V\u1ef1ng",
-  "short_name": "H\u1ecdc T\u1eeb V\u1ef1ng",
+  "id": "./",
+  "name": "Học Từ Vựng",
+  "short_name": "Học Từ Vựng",
+  "description": "Học từ vựng tiếng Anh bằng flashcard, trò chơi và thiên hà từ vựng 3D.",
+  "categories": [
+    "education"
+  ],
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
