@@ -2,33 +2,79 @@ import*as T from 'three';
 import{W}from'./words.js';
 import{firebaseConfig}from'./firebase-config.js';
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import{getDatabase,ref,set,get,query,orderByChild,limitToLast,serverTimestamp}from'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
-import{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut}from'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import{getDatabase,ref,set,get,remove,query,orderByChild,limitToLast,serverTimestamp}from'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
+import{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut,signInAnonymously,linkWithPopup,linkWithCredential,signInWithCredential,EmailAuthProvider,deleteUser}from'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 const $=s=>document.querySelector(s),h=s=>$('#main').innerHTML=s,esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const L=['A1','A2','B1','B2','C1'],LC={A1:0x3ddc97,A2:0x4cc9f0,B1:0x7c9cff,B2:0xc77dff,C1:0xff6b81};
 const dayOf=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')},day=()=>dayOf(Date.now()),sh=v=>v.split(/[;,(]/)[0].trim(),rnd=a=>a[Math.random()*a.length|0];
-function def(){return{xp:0,streak:0,last:'',day:day(),nn:0,rv:0,cards:{},lv:['A1','A2'],nd:10,acc:'en-GB',auto:false,name:'',upd:0,best:0,owner:'',fx:true,sfx:true,music:true,mv:.5}}
+function def(){return{xp:0,streak:0,last:'',day:day(),nn:0,rv:0,cards:{},lv:['A1','A2'],nd:10,acc:'en-GB',auto:false,name:'',upd:0,best:0,owner:'',fx:true,sfx:true,music:true,mv:.5,nc:0}}
 let S;try{S=Object.assign(def(),JSON.parse(localStorage.vv))}catch{S=def()}
 if(S.day!==day()){S.day=day();S.nn=0;S.rv=0}
 const lvl=()=>Math.floor(Math.sqrt(S.xp/50))+1;
 /* ---------- Firebase (Auth + Realtime DB) ---------- */
 const app=initializeApp(firebaseConfig),db=getDatabase(app),au=getAuth(app);
 let usr=null,uid='',cs='Chưa đăng nhập – dữ liệu chỉ lưu trên máy',tm;
-const EM={'auth/invalid-credential':'Sai email hoặc mật khẩu','auth/email-already-in-use':'Email đã được đăng ký','auth/weak-password':'Mật khẩu tối thiểu 6 ký tự','auth/invalid-email':'Email không hợp lệ','auth/popup-closed-by-user':'Bạn đã đóng cửa sổ đăng nhập','auth/unauthorized-domain':'Domain chưa được thêm vào Authorized domains (xem README)','auth/network-request-failed':'Mất kết nối mạng'};
+const EM={'auth/invalid-credential':'Sai email hoặc mật khẩu','auth/email-already-in-use':'Email đã được đăng ký','auth/weak-password':'Mật khẩu tối thiểu 6 ký tự','auth/invalid-email':'Email không hợp lệ','auth/popup-closed-by-user':'Bạn đã đóng cửa sổ đăng nhập','auth/unauthorized-domain':'Domain chưa được thêm vào Authorized domains (xem README)','auth/network-request-failed':'Mất kết nối mạng','auth/admin-restricted-operation':'Chưa bật đăng nhập Ẩn danh (Anonymous) trong Firebase Console','auth/operation-not-allowed':'Phương thức đăng nhập này chưa được bật trong Firebase Console','auth/popup-blocked':'Trình duyệt chặn cửa sổ đăng nhập, hãy cho phép popup','auth/cancelled-popup-request':'Đã huỷ đăng nhập','auth/too-many-requests':'Thử quá nhiều lần, hãy đợi một lúc','auth/missing-password':'Chưa nhập mật khẩu','auth/missing-email':'Chưa nhập email','auth/user-disabled':'Tài khoản đã bị khoá','auth/credential-already-in-use':'Tài khoản này đã được liên kết với người khác','auth/provider-already-linked':'Tài khoản đã được liên kết rồi'};
 const err=e=>EM[e.code]||e.code||e.message;
 const refresh=()=>{if(tab=='me'||tab=='home')V[tab]()};
 function merge(a,b){const n=a.upd>=b.upd?a:b,r=Object.assign(def(),n),ca=a.cards||{},cb=b.cards||{};r.cards={...cb,...ca};for(const k in cb)if(ca[k]&&(cb[k].ts||0)>(ca[k].ts||0))r.cards[k]=cb[k];
- r.xp=Math.max(a.xp||0,b.xp||0);r.best=Math.max(a.best||0,b.best||0);r.upd=Date.now();if(r.day!==day()){r.day=day();r.nn=0;r.rv=0}return r}
+ r.xp=Math.max(a.xp||0,b.xp||0);r.best=Math.max(a.best||0,b.best||0);r.upd=Date.now();
+ {const na=a.nc||0,nb=b.nc||0;r.nc=Math.max(na,nb);r.name=na!=nb?(na>nb?a.name:b.name):(/^Khách /.test(a.name||'')&&b.name?b.name:(r.name||a.name||b.name||''))}if(r.day!==day()){r.day=day();r.nn=0;r.rv=0}return r}
 async function push(){await set(ref(db,'users/'+uid),S);await set(ref(db,'leaderboard/'+uid),{n:S.name||'Ẩn danh',xp:S.xp,st:S.streak,lv:lvl(),t:serverTimestamp()})}
 async function pull(){cs='⏳ Đang đồng bộ…';refresh();try{const d=(await get(ref(db,'users/'+uid))).val();
  if(d){const nc={};Object.entries(d.cards||{}).forEach(([k,v])=>{if(v)nc[k]=v});d.cards=nc}
- if(S.owner&&S.owner!==uid)S=d?Object.assign(def(),d):def();else S=d?merge(S,d):S;
- S.owner=uid;if(!S.name)S.name=(usr.displayName||'').slice(0,16);localStorage.vv=JSON.stringify(S);await push();cs='☁️ Đã đồng bộ'}catch(e){cs='📴 Lỗi đồng bộ: '+(e.code||e.message)}refresh()}
+ if(S.owner&&S.owner!==uid&&S.owner!==localStorage.vvao)S=d?Object.assign(def(),d):def();else S=d?merge(S,d):S;
+ S.owner=uid;if(!usr.isAnonymous)localStorage.removeItem('vvao');await ensureName();localStorage.vv=JSON.stringify(S);await push();cs='☁️ Đã đồng bộ'}catch(e){cs='📴 Lỗi đồng bộ: '+(e.code||e.message)}refresh()}
 function cloud(){if(!usr)return;clearTimeout(tm);tm=setTimeout(()=>push().then(()=>cs='☁️ Đã đồng bộ').catch(e=>cs='📴 Lỗi: '+(e.code||'')),2500)}
 function save(){S.upd=Date.now();localStorage.vv=JSON.stringify(S);cloud()}
-onAuthStateChanged(au,u=>{usr=u;uid=u?u.uid:'';if(u)pull();else{cs='Chưa đăng nhập – dữ liệu chỉ lưu trên máy';refresh()}});
-const acct=()=>usr?`<div class="card"><b>☁️ Tài khoản</b><div class="m" style="margin:6px 0">${esc(usr.email||usr.displayName||'')}<br>${cs}</div><button class="btn s" data-a="logout">Đăng xuất</button></div>`
-:`<div class="card"><b>Đăng nhập để đồng bộ & xếp hạng</b><div class="m" style="margin:6px 0">${cs}</div><button class="btn" data-a="google">Đăng nhập bằng Google</button><input id="em" type="email" placeholder="Email" style="margin-top:10px"><input id="pw" type="password" placeholder="Mật khẩu (từ 6 ký tự)" style="margin-top:8px"><div class="row"><button class="btn s" data-a="login">Đăng nhập</button><button class="btn s" data-a="signup">Đăng ký</button></div><button class="chip" data-a="reset">Quên mật khẩu?</button></div>`;
+/* ---------- Tên hiển thị: không trùng (không phân biệt hoa/thường), giữ chỗ trong names/<tên> = uid ---------- */
+const nk=n=>encodeURIComponent(String(n).normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase()).replace(/\./g,'%2E'),
+ nameLock=()=>Date.now()-(S.nc||0)<864e5;/* đã đổi tên trong 24 giờ qua: ô tên bị làm mờ */
+async function avail(n){try{const o=(await get(ref(db,'names/'+nk(n)))).val();return!o||o===uid?1:0}catch{return -1}}/* 1 dùng được · 0 đã có người dùng · -1 không kiểm tra được */
+async function claim(n){const r=ref(db,'names/'+nk(n));let o;try{o=(await get(r)).val()}catch{return -1}
+ if(o===uid)return 1;if(o)return 0;try{await set(r,uid);return 1}catch{return 0}}
+/* Đảm bảo tên hiện tại đã được giữ chỗ cho tài khoản này; nếu trùng thì thêm số phía sau. Chưa có tên thì dùng tên mặc định (Khách ab12 / tên Google) */
+async function ensureName(){if(!usr)return;const n=S.name||(usr.isAnonymous?'Khách '+uid.slice(0,4):(usr.displayName||'').slice(0,16));if(!n)return;
+ for(let i=0;i<6;i++){const c=i?n.slice(0,13)+' '+(10+Math.random()*90|0):n,r=await claim(c);if(r<0)break;
+  if(r){if(S.name&&c!==S.name)toast('Tên "'+S.name+'" đã có người dùng, đã đổi thành "'+c+'"',4000);S.name=c;return}}
+ if(!S.name)S.name=n}
+async function wipe(){const k=S.name?nk(S.name):'';for(const q of['leaderboard/'+uid,'users/'+uid,k&&'names/'+k])if(q)try{await remove(ref(db,q))}catch{}}
+const cl=v=>String(v).trim().replace(/\s+/g,' ');
+async function rename(raw){const el=$('#nm'),v=cl(raw).slice(0,16),back=()=>{if(el){el.value=S.name;el.disabled=false}};
+ if(v===S.name||nameLock())return back();
+ clearTimeout(nt);if(el)el.disabled=true;
+ if(v&&!(S.name&&nk(v)==nk(S.name))){const r=usr?await claim(v):await avail(v);
+  if(r==0){toast('Tên đã có người dùng, hãy chọn tên khác');return back()}
+  if(r<0&&usr){toast('Không kiểm tra được tên – kiểm tra mạng và Rules của database');return back()}}
+ const o=S.name;S.name=v;S.nc=Date.now();if(usr&&o&&nk(o)!=nk(v))remove(ref(db,'names/'+nk(o))).catch(()=>{});
+ save();toast('Đã đổi tên ✔');if(tab=='me')V.me()}
+let nt;function hint(e){const v=cl(e.target.value),h=$('#nh');clearTimeout(nt);if(!h)return;
+ if(!v||v===S.name||(S.name&&nk(v)==nk(S.name))){h.hidden=true;return}
+ nt=setTimeout(async()=>{const r=await avail(v),h2=$('#nh'),i=$('#nm');if(!h2||!i||cl(i.value)!==v||v===S.name||nameLock())return;h2.hidden=r<0;h2.textContent=r?'✔ Tên có thể dùng':'✖ Tên đã có người dùng';h2.style.color=r?'var(--g)':'var(--r)'},450)}
+/* ---------- Màn hình đăng nhập đầu tiên: Google / email / khách ---------- */
+let ready=false,gtry=false;
+const guestOn=()=>localStorage.vvg==='1';
+const form=(a,b)=>`<input type="email" placeholder="Email" autocomplete="email" style="margin-top:10px"><input type="password" placeholder="Mật khẩu (từ 6 ký tự)" autocomplete="current-password" style="margin-top:8px"><div class="row"><button class="btn s" data-a="login">${a}</button><button class="btn s" data-a="signup">${b}</button></div><button class="chip" data-a="reset">Quên mật khẩu?</button>`;
+function gate(){let e=$('#gate');const need=!ready||(!usr&&!guestOn());
+ if(!need){if(e)e.remove();return}
+ const st=ready?'fm':'ld';if(!e){e=document.createElement('div');e.id='gate';document.body.appendChild(e)}if(e.dataset.s===st)return;e.dataset.s=st;
+ e.innerHTML=st=='ld'?'<div class="gi ct"><div class="gl">🌌</div><h2>Học Từ Vựng</h2><div class="m">⏳ Đang tải…</div></div>'
+ :`<div class="gi ct"><div class="gl">🌌</div><h2>Học Từ Vựng</h2><p class="m" style="margin:0 0 14px">Đăng nhập để đồng bộ tiến độ giữa các thiết bị và thi đua trên bảng xếp hạng.</p><div class="card af" style="text-align:left"><button class="btn" data-a="google" style="margin-top:0">Đăng nhập bằng Google</button>${form('Đăng nhập','Đăng ký')}</div><div class="m" style="margin:6px 0">hoặc</div><button class="btn s" data-a="guest" style="margin-top:0">👤 Chơi với tài khoản khách</button><p class="m" style="margin:10px 0 0">Tài khoản khách vẫn chơi online và xem được bảng xếp hạng. Bạn có thể liên kết Google/email sau để giữ tiến độ.</p></div>`}
+const fv=t=>{const f=t.closest('.af');return[f.querySelector('[type=email]').value.trim(),f.querySelector('[type=password]').value]};
+/* Chuyển từ tài khoản khách sang tài khoản khác: xoá dòng của khách trên cloud (tránh trùng trên bảng xếp hạng); nếu đăng nhập thất bại thì ghi lại */
+async function swap(fn){const g=usr&&usr.isAnonymous?uid:'';
+ if(g){clearTimeout(tm);await wipe()}
+ try{await fn()}catch(x){if(g)ensureName().then(push).catch(()=>{});throw x}}
+/* Sau khi liên kết tài khoản khách: uid giữ nguyên nên onAuthStateChanged không chạy, tự cập nhật */
+function linked(){usr=au.currentUser;localStorage.removeItem('vvao');localStorage.removeItem('vvg');const o=S.name;if(/^Khách /.test(o||'')&&usr.displayName&&!S.nc)S.name=usr.displayName.slice(0,16);cs='☁️ Đã liên kết';ensureName().then(()=>{if(o&&nk(o)!=nk(S.name))remove(ref(db,'names/'+nk(o))).catch(()=>{});save();refresh()});toast('Đã liên kết tài khoản ✔')}
+onAuthStateChanged(au,u=>{usr=u;uid=u?u.uid:'';ready=true;
+ if(u){if(u.isAnonymous)localStorage.vvao=u.uid;else localStorage.removeItem('vvg');pull()}
+ else{cs='Chưa đăng nhập – dữ liệu chỉ lưu trên máy';refresh();if(guestOn()&&!gtry){gtry=true;signInAnonymously(au).catch(()=>{})}}
+ gate()});
+setTimeout(()=>{if(!ready){ready=true;gate()}},4000);
+const acct=()=>usr&&!usr.isAnonymous?`<div class="card"><b>☁️ Tài khoản</b><div class="m" style="margin:6px 0">${esc(usr.email||usr.displayName||'')}<br>${cs}</div><button class="btn s" data-a="logout">Đăng xuất</button></div>`
+:usr?`<div class="card af"><b>👤 Tài khoản khách</b><div class="m" style="margin:6px 0">${esc(S.name)}<br>${cs}<br>Liên kết Google/email để giữ tiến độ khi đổi máy hoặc thoát.</div><button class="btn" data-a="google">Liên kết với Google</button>${form('Đăng nhập','Liên kết email')}<button class="chip" data-a="logout">Thoát chế độ khách</button></div>`
+:`<div class="card af"><b>Đăng nhập để đồng bộ & xếp hạng</b><div class="m" style="margin:6px 0">${cs}</div><button class="btn" data-a="google">Đăng nhập bằng Google</button>${form('Đăng nhập','Đăng ký')}</div>`;
 /* ---------- Logic ---------- */
 function addXP(n){if(S.last!==day()){const y=dayOf(Date.now()-864e5);S.streak=S.last===y?S.streak+1:1;S.last=day()}S.xp+=n}
 function nxt(c,g){c=Object.assign({n:0,ef:2.5,iv:0,lp:0},c);if(g==0){c.n=0;c.iv=0;c.due=Date.now()+6e4;c.lp++;c.ef=Math.max(1.3,c.ef-.2)}
@@ -164,7 +210,7 @@ function fin(){if(G.over)return;G.over=1;clearInterval(G.tm);const bonus=G.ok>=G
 V.galaxy=()=>{const ids=Object.keys(S.cards),mast=ids.filter(i=>S.cards[i].iv>=21).length;h(`<div class="card" style="pointer-events:none"><b>🌌 Thiên hà từ vựng</b> <span class="m">· ${ids.length}/${W.length} từ · ${mast} thuộc lòng</span><div style="margin-top:4px;font-size:13px">${L.map(l=>`<span style="color:#${LC[l].toString(16).padStart(6,0)}">● ${l} </span>`).join('')}</div><div class="m" style="margin-top:2px">Vuốt để xoay · chụm hai ngón để thu phóng</div></div>`)};
 const sw=(on,a)=>`<button class="sw ${on?'on':''}" role="switch" aria-checked="${!!on}" data-a="${a}"><i></i></button>`;
 V.me=()=>{const tabs=[['set','Học'],['snd','Âm thanh'],['acc','Tài khoản'],['lb','Xếp hạng']];let b='';
- if(mt=='set')b=`<div class="card"><div class="lr"><span>Tên hiển thị</span><input id="nm" value="${esc(S.name)}" maxlength="16" placeholder="Ẩn danh" style="width:55%"></div>
+ if(mt=='set')b=`<div class="card"><div style="border-bottom:1px solid var(--b)"><div class="lr" style="border-bottom:0"><span>Tên hiển thị</span><input id="nm" value="${esc(S.name)}" maxlength="16" placeholder="Ẩn danh" style="width:55%${nameLock()?';opacity:.45':''}"${nameLock()?' disabled':''}></div><div id="nh" class="m" hidden style="text-align:right;padding-bottom:8px"></div></div>
  <div style="padding:10px 0;border-bottom:1px solid var(--b)"><div style="margin-bottom:6px">Cấp độ muốn học</div><div class="lv">${L.map(l=>`<button class="chip ${S.lv.includes(l)?'on':''}" data-a="lv" data-v="${l}">${l}</button>`).join('')}</div></div>
  <div class="lr"><span>Từ mới mỗi ngày</span><span><button class="chip" data-a="nd" data-v="-5">−</button><b>${S.nd}</b><button class="chip" data-a="nd" data-v="5">+</button></span></div>
  <div class="lr"><span>Giọng đọc</span><button class="chip on" data-a="acc">${S.acc=='en-GB'?'🇬🇧 Anh':'🇺🇸 Mỹ'}</button></div>
@@ -174,11 +220,11 @@ V.me=()=>{const tabs=[['set','Học'],['snd','Âm thanh'],['acc','Tài khoản']
  <div class="lr"><span>Âm thanh hiệu ứng</span>${sw(S.sfx!==false,'snd')}</div>
  <div class="lr"><span>Hiệu ứng 3D <span class="m">(tốn pin)</span></span>${sw(S.fx,'fx')}</div></div>`;
  else if(mt=='acc')b=`${acct()}<div class="card"><b>Dữ liệu trên máy</b><div class="row"><button class="btn s" data-a="bak">Sao lưu (.json)</button><button class="btn s" data-a="rest">Khôi phục</button></div></div>`;
- else b=`<div class="card"><b>🏆 Bảng xếp hạng</b><div id="lb" class="m" style="margin-top:6px">Đang tải…</div></div>`;
+ else b=`<div class="card"><b>🏆 Bảng xếp hạng</b><div id="lb" class="m" style="margin-top:6px">Đang tải…</div></div>${usr?'':'<p class="m ct">Bạn chưa đăng nhập nên chưa có tên trên bảng. Vào tab Tài khoản để đăng nhập hoặc chơi với tài khoản khách.</p>'}`;
  h(`<div class="seg">${tabs.map(([k,n])=>`<button class="${mt==k?'on':''}" data-a="mt" data-v="${k}">${n}</button>`).join('')}</div>${b}`);
- if($('#nm'))$('#nm').onchange=e=>{S.name=e.target.value.trim();save()};
+ if($('#nm')){$('#nm').onchange=e=>rename(e.target.value);$('#nm').oninput=hint}
  if($('#mv')){$('#mv').oninput=e=>{S.mv=e.target.value/100;if(MB)MB.gain.setTargetAtTime(S.music?S.mv*.5:0,AC.currentTime,.05)};$('#mv').onchange=()=>save()}
- if(mt=='lb'){if(db)get(query(ref(db,'leaderboard'),orderByChild('xp'),limitToLast(10))).then(s=>{const a=[];s.forEach(c=>a.push(c.val()));a.reverse();$('#lb')&&($('#lb').innerHTML=a.map((u,k)=>`<div class="lr hit"><span>${k+1}. ${esc(u.n)} <span class="m">Lv ${u.lv}</span></span><b>${u.xp} XP</b></div>`).join('')||'Chưa có dữ liệu')}).catch(()=>{$('#lb')&&($('#lb').textContent='Không tải được (kiểm tra Rules của Realtime Database)')});else $('#lb').textContent='Cần kết nối Firebase'}};
+ if(mt=='lb'){if(db)get(query(ref(db,'leaderboard'),orderByChild('xp'),limitToLast(10))).then(s=>{const a=[];s.forEach(c=>{a.push({...c.val(),id:c.key})});a.reverse();$('#lb')&&($('#lb').innerHTML=a.map((u,k)=>`<div class="lr hit"${u.id==uid?' style="color:var(--y)"':''}><span>${k+1}. ${esc(u.n)}${u.id==uid?' (bạn)':''} <span class="m">Lv ${u.lv}</span></span><b>${u.xp} XP</b></div>`).join('')||'Chưa có dữ liệu')}).catch(()=>{$('#lb')&&($('#lb').textContent='Không tải được (kiểm tra Rules của Realtime Database)')});else $('#lb').textContent='Cần kết nối Firebase'}};
 /* ---------- Thanh trên: nhạc nền + cài về máy ---------- */
 const std=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform=='MacIntel'&&navigator.maxTouchPoints>1);
 function topUI(){const m=$('#mus'),i=$('#ins');if(m){m.textContent=S.music?'🎵':'🔇';m.classList.toggle('off',!S.music);m.setAttribute('aria-pressed',!!S.music)}if(i)i.hidden=std()}
@@ -186,7 +232,7 @@ addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;topUI()});
 addEventListener('appinstalled',()=>{dip=null;topUI();toast('Đã cài về máy ✔')});
 function closeSheet(){const e=$('#sheet');if(e)e.remove()}
 function modal(html){closeSheet();const d=document.createElement('div');d.id='sheet';d.innerHTML='<div>'+html+'</div>';d.addEventListener('click',e=>{if(e.target===d)closeSheet()});document.body.appendChild(d)}
-let tt;function toast(m){let e=$('#toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e)}e.textContent=m;e.hidden=false;clearTimeout(tt);tt=setTimeout(()=>e.hidden=true,2500)}
+let tt;function toast(m,ms){let e=$('#toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e)}e.textContent=m;e.hidden=false;clearTimeout(tt);tt=setTimeout(()=>e.hidden=true,ms||2500)}
 /* ---------- Actions ---------- */
 const A={go,say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
  mt(v){mt=v;V.me()},closeSheet,
@@ -201,11 +247,17 @@ const A={go,say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
  nd(d){S.nd=Math.max(5,Math.min(100,S.nd+ +d));save();V.me()},acc(){S.acc=S.acc=='en-GB'?'en-US':'en-GB';save();V.me()},auto(){S.auto=!S.auto;save();V.me()},snd(){S.sfx=S.sfx===false;save();sfx('good',3);V.me()},
  known(){sfx('good',3);const i=Q[qi];S.cards[i]={n:3,ef:2.5,iv:30,lp:0,due:Date.now()+30*864e5,ts:Date.now()};S.nn++;addXP(2);save();qi++;V.learn()},
  fx(){S.fx=!S.fx;save();V.me()},
- async google(){try{await signInWithPopup(au,new GoogleAuthProvider())}catch(x){alert(err(x))}},
- async login(){try{await signInWithEmailAndPassword(au,$('#em').value.trim(),$('#pw').value)}catch(x){alert(err(x))}},
- async signup(){try{await createUserWithEmailAndPassword(au,$('#em').value.trim(),$('#pw').value)}catch(x){alert(err(x))}},
- async reset(){const e=$('#em').value.trim();if(!e)return alert('Nhập email trước');try{await sendPasswordResetEmail(au,e);alert('Đã gửi email đặt lại mật khẩu')}catch(x){alert(err(x))}},
- async logout(){if(!confirm('Đăng xuất? Dữ liệu trên máy sẽ được xoá (bản trên cloud vẫn giữ).'))return;try{clearTimeout(tm);await push()}catch{}await signOut(au);S=def();localStorage.vv=JSON.stringify(S);go('me')},
+ async guest(){localStorage.vvg='1';gate();toast('⏳ Đang vào chế độ khách…');
+  try{await signInAnonymously(au);toast('Đã vào bằng tài khoản khách ✔')}catch(x){console.warn(x);toast('Chưa vào được chế độ khách online ('+err(x)+'). Đang chơi ngoại tuyến, vẫn xem được bảng xếp hạng.',5000)}
+  refresh()},
+ async google(){const p=new GoogleAuthProvider();try{if(usr&&usr.isAnonymous){try{await linkWithPopup(usr,p);linked()}catch(x){if(x.code!='auth/credential-already-in-use')throw x;const c=GoogleAuthProvider.credentialFromError(x);await swap(()=>signInWithCredential(au,c))}}else await signInWithPopup(au,p)}catch(x){alert(err(x))}},
+ async login(v,t){const[e,p]=fv(t);try{await swap(()=>signInWithEmailAndPassword(au,e,p))}catch(x){alert(err(x))}},
+ async signup(v,t){const[e,p]=fv(t);try{if(usr&&usr.isAnonymous){await linkWithCredential(usr,EmailAuthProvider.credential(e,p));linked()}else await createUserWithEmailAndPassword(au,e,p)}catch(x){alert(err(x))}},
+ async reset(v,t){const[e]=fv(t);if(!e)return alert('Nhập email trước');try{await sendPasswordResetEmail(au,e);alert('Đã gửi email đặt lại mật khẩu')}catch(x){alert(err(x))}},
+ async logout(){const an=usr&&usr.isAnonymous;if(!confirm(an?'Thoát chế độ khách? Tiến độ của tài khoản khách sẽ MẤT và không khôi phục được nếu bạn chưa liên kết Google/email.':'Đăng xuất? Dữ liệu trên máy sẽ được xoá (bản trên cloud vẫn giữ).'))return;
+  localStorage.removeItem('vvg');localStorage.removeItem('vvao');clearTimeout(tm);
+  try{if(an){await wipe();await deleteUser(usr)}else await push()}catch{}
+  try{await signOut(au)}catch{}S=def();localStorage.vv=JSON.stringify(S);go('me')},
  bak(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='hoc-tu-vung-backup.json';a.click()},
  rest(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=async()=>{try{const d=JSON.parse(await i.files[0].text());if(typeof d.xp!='number')throw 0;S=merge(S,d);save();go('me')}catch{alert('File không hợp lệ')}};i.click()}};
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t){e.stopPropagation();A[t.dataset.a](t.dataset.v,t)}});

@@ -76,5 +76,12 @@ mark{background:none;color:var(--y);font-weight:700}
 #sheet ol{margin:8px 0 4px;padding-left:20px}#sheet li{margin-bottom:6px}
 #toast{position:fixed;left:50%;bottom:calc(var(--nav) + 12px);transform:translateX(-50%);z-index:21;background:#1d2750;border:1px solid var(--b);color:var(--t);padding:10px 16px;border-radius:20px;font-size:14px;max-width:90%;text-align:center}
 
+/* Màn hình đăng nhập đầu tiên (phủ kín, nằm dưới hộp thoại và thông báo) */
+#gate{position:fixed;inset:0;z-index:19;display:flex;overflow-y:auto;overscroll-behavior:contain;background:rgba(11,16,32,.86);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px)}
+#gate .gi{margin:auto;width:100%;max-width:420px}
+#gate .gl{font-size:56px;line-height:1.1}
+#gate h2{font-size:26px;margin-bottom:6px}
+#gate .card{margin-bottom:0}
+
 @media (max-height:600px){.flip{min-height:200px}.w{font-size:30px}.st b{font-size:17px}}
 @media (prefers-reduced-motion:reduce){.fc,.sw,.sw i{transition:none}}

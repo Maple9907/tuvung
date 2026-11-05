@@ -34,6 +34,13 @@
           ".validate": false
         }
       }
+    },
+    "names": {
+      "$k": {
+        ".read": true,
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid) && (!newData.exists() || newData.val() === auth.uid)",
+        ".validate": "$k.length <= 256 && newData.isString() && newData.val().length <= 128"
+      }
     }
   }
 }
