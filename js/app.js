@@ -131,7 +131,7 @@ V.learn=()=>{if(!Q){Q=buildQ();qi=0}fl=false;
  const i=Q[qi],x=W[i],c=S.cards[i],bc=['#ff6b81','#ffd166','#3ddc97','#4cc9f0'],lb=['Quên','Khó','Tốt','Dễ'];
  h(`<div class="fill"><div class="lh"><span class="m">${qi+1}/${Q.length} · ${c?'Ôn tập':'Từ mới'}</span>${c?'':'<button class="chip" data-a="known">✔ Đã biết từ này</button>'}</div><div class="bar" style="margin:2px 0 10px"><i style="width:${qi/Q.length*100}%"></i></div>
  <div class="flip" data-a="flip"><div class="fc"><div class="face"><span class="badge">${x.c} · ${x.l.replace('Oxford ','O')}</span><div class="w">${esc(x.w)}</div><div class="m" style="font-size:20px">${esc(x.ph)}</div><button class="sp" data-a="say" data-v="${i}" aria-label="Nghe phát âm">🔊</button><span class="m">Chạm để lật</span></div>
- <div class="face bk"><div class="m">${esc(x.p)}</div><div style="font-size:22px;font-weight:600;margin:6px 0 12px">${esc(x.v)}</div><div>${hl(x.e,x.w)}</div><div class="m" style="margin-top:4px">${esc(x.t)}</div></div></div></div>
+ <div class="face bk"><div style="font-weight:700;font-size:20px">${esc(x.w)} <span class="m" style="font-weight:400">${esc(x.ph)}</span></div><div class="m">${esc(x.p)}</div><div style="font-size:22px;font-weight:600;margin:6px 0 12px">${esc(x.v)}</div><div>${hl(x.e,x.w)}</div><div class="m" style="margin-top:4px">${esc(x.t)}</div><div style="margin-top:6px"><button class="sp" data-a="say" data-v="${i}" aria-label="Nghe phát âm">🔊</button></div><span class="m">Chạm để lật lại</span></div></div></div>
  <div class="gr hide" id="gr">${[0,1,2,3].map(g=>`<button style="background:${bc[g]}" data-a="gr" data-v="${g}">${lb[g]}<small>${ivl(c,g)}</small></button>`).join('')}</div></div>`);
  if(S.auto)speak(x.w)};
 const modes={mc:['🔤','Trắc nghiệm','Anh → Việt'],mc2:['🇻🇳','Đoán từ','Việt → Anh'],listen:['🎧','Nghe & chọn','Luyện nghe'],cloze:['✍️','Điền chỗ trống','Từ trong câu'],type:['⌨️','Gõ từ','Nhớ chính tả'],speed:['⚡','Tốc độ 60s','Kỷ lục: '+S.best]};
@@ -149,7 +149,7 @@ function mkQ(m,pool){const i=rnd(pool),x=W[i],dis=f=>{const o=[f(x)];let g=0;whi
  else{q.p=`<div style="font-size:24px;font-weight:600">${esc(sh(x.v))}</div><div class="m">${esc(x.p)} · gợi ý: ${esc(x.w[0])}${x.w.slice(1).replace(/[a-z]/gi,' _')}</div>`}
  return q}
 function nextQ(){if(G.n>=G.max)return fin();const q=G.q=mkQ(G.m=='speed'?'mc':G.m,G.pool);G.done=false;
- h(`<div class="fill"><div class="gh m"><button class="x" data-a="go" data-v="play" aria-label="Thoát">✕</button><span>${G.m=='speed'?'<span id="tm">⏱ 60</span>':G.n+1+'/'+G.max}</span><span>✅ ${G.ok}</span><span>🔥 ${G.combo}</span></div>
+ h(`<div class="fill"><div class="gh m"><button class="x" data-a="go" data-v="play" aria-label="Thoát">✕</button><span>${G.m=='speed'?'<span id="tm">⏱ '+Math.max(0,Math.ceil((G.end-Date.now())/1e3))+'</span>':G.n+1+'/'+G.max}</span><span>✅ ${G.ok}</span><span>🔥 ${G.combo}</span></div>
  <div class="card ct q">${q.p}</div>
  ${q.o?q.o.map((o,k)=>`<button class="op" data-a="pick" data-v="${k}">${esc(o)}</button>`).join(''):`<input id="ti" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Gõ từ tiếng Anh…"><button class="btn" data-a="chk">Kiểm tra</button>`}</div>`);
  if(q.m=='listen')speak(q.s);if($('#ti')){$('#ti').focus();$('#ti').onkeydown=e=>{if(e.key=='Enter')A.chk()}}}
@@ -158,7 +158,7 @@ function answer(ok,given){if(G.done||G.over)return;G.done=true;const q=G.q;G.n++
  if(S.cards[q.i])S.cards[q.i]=nxt(S.cards[q.i],ok?2:0);if(q.s&&q.m!='listen')speak(W[q.i].w);
  document.querySelectorAll('.op').forEach((b,k)=>{if(q.o[k]==q.a)b.classList.add('ok');else if(k==given)b.classList.add('no')});
  if(q.m=='type'){const t=$('#ti');t.style.borderColor=ok?'#3ddc97':'#ff6b81';if(!ok)t.value=W[q.i].w}
- setTimeout(()=>G&&!G.over&&tab=='play'&&nextQ(),ok?650:1500)}
+ setTimeout(()=>G&&!G.over&&tab=='play'&&nextQ(),G.m=='speed'?(ok?250:800):(ok?650:1500))}
 function fin(){if(G.over)return;G.over=1;clearInterval(G.tm);const bonus=G.ok>=G.max*.8||G.m=='speed'&&G.ok>=10?20:0;G.xp+=bonus;const l0=lvl();addXP(G.xp);if(G.m=='speed'&&G.ok>S.best)S.best=G.ok;save();const m=G.m,n=G.n||1;sfx(lvl()>l0?'lvl':G.ok/n>=.5?'win':'lose');
  h(`<div class="card ct"><div style="font-size:56px">${G.ok/n>=.8?'🏆':'💪'}</div><h2>${G.ok}/${G.n} đúng</h2><p class="m">+${G.xp} XP${bonus?' (gồm thưởng '+bonus+')':''} · Lv ${lvl()}</p><button class="btn" data-a="play" data-v="${m}">Chơi lại</button><button class="btn s" data-a="go" data-v="play">Chọn chế độ khác</button></div>`)}
 V.galaxy=()=>{const ids=Object.keys(S.cards),mast=ids.filter(i=>S.cards[i].iv>=21).length;h(`<div class="card" style="pointer-events:none"><b>🌌 Thiên hà từ vựng</b> <span class="m">· ${ids.length}/${W.length} từ · ${mast} thuộc lòng</span><div style="margin-top:4px;font-size:13px">${L.map(l=>`<span style="color:#${LC[l].toString(16).padStart(6,0)}">● ${l} </span>`).join('')}</div><div class="m" style="margin-top:2px">Vuốt để xoay · chụm hai ngón để thu phóng</div></div>`)};
@@ -193,7 +193,7 @@ const A={go,say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
  music(){S.music=!S.music;save();S.music?musOn():musOff();topUI();if(tab=='me')V.me()},
  async install(){if(dip){const p=dip;dip=null;p.prompt();try{await p.userChoice}catch{}topUI();return}
   modal(`<h3>Cài về máy</h3>${ios?'<ol><li>Mở trang này bằng <b>Safari</b></li><li>Bấm nút <b>Chia sẻ</b> (hình vuông có mũi tên hướng lên) ở thanh dưới</li><li>Chọn <b>Thêm vào MH chính</b></li></ol>':'<ol><li>Bấm menu <b>⋮</b> của trình duyệt (Chrome / Edge)</li><li>Chọn <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b></li></ol><div class="m">Nếu không thấy mục này, hãy mở trang bằng Chrome và đảm bảo địa chỉ bắt đầu bằng https://</div>'}<button class="btn" data-a="closeSheet">Đã hiểu</button>`)},
- flip(){if(fl)return;fl=true;sfx('flip');$('.fc').classList.add('f');$('#gr').classList.remove('hide')},
+ flip(){fl=!fl;sfx('flip');$('.fc').classList.toggle('f',fl);$('#gr').classList.remove('hide')},
  gr(g){g=+g;burst(g>0);sfx(g?'good':'again',g);grade(Q[qi],g);if(g==0)Q.push(Q[qi]);addXP(g==0?1:g==3?8:5);save();qi++;V.learn()},
  play(m){startGame(m)},pick(k){answer(G.q.o[k]==G.q.a,+k)},
  chk(){const v=$('#ti').value.trim().toLowerCase();answer(v==G.q.a.toLowerCase())},
