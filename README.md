@@ -18,3 +18,19 @@
 - **Giao diện gọn cho điện thoại**: mỗi màn hình vừa khít một khung hình, thẻ học tự co theo chiều cao màn hình, mục Tôi chia thành 4 tab (Học, Âm thanh, Tài khoản, Xếp hạng).
 
 Chưa đăng nhập vẫn học bình thường, tiến độ được lưu ngay trên máy.
+
+## Tên hiển thị
+
+Tên không được trùng (không phân biệt hoa/thường, khoảng trắng thừa được gộp), kiểm tra ngay khi gõ. Mỗi tên được giữ chỗ trong `names/<tên>` của Realtime Database. Mỗi tài khoản đổi tên tối đa 1 lần / 24 giờ (ô đổi tên bị làm mờ trong thời gian đó).
+
+**Sau khi cập nhật, cần đăng lại Rules**: `firebase deploy --only database` hoặc dán nội dung `database.rules.json` vào Firebase Console → Realtime Database → Rules → Publish.
+
+## Cấu hình Firebase cho tài khoản khách
+
+Vào Firebase Console → **Authentication → Sign-in method → Anonymous → Enable**. Không cần sửa `database.rules.json`: tài khoản khách cũng là người dùng đã xác thực (`auth != null`), còn bảng xếp hạng cho phép đọc công khai.
+
+## Đăng nhập / đăng ký bằng email
+
+- Form có 2 tab **Đăng nhập** / **Đăng ký**, kiểm tra ngay trên form (email hợp lệ, mật khẩu ≥ 6 ký tự, nhập lại mật khẩu), nút hiện/ẩn mật khẩu và trạng thái "Đang xử lý…" (khoá nút để không bấm trùng). Lỗi hiện ngay trong form, không còn popup của trình duyệt.
+- Tab Đăng ký kiểm tra email đã đăng ký chưa khi rời ô email; nếu Firebase đang bật **Email enumeration protection** thì việc kiểm tra sớm này không có kết quả, nhưng bấm **Tạo tài khoản** vẫn báo "Email đã được đăng ký" kèm nút chuyển sang đăng nhập.
+- Cần bật **Authentication → Sign-in method → Email/Password** trong Firebase Console.

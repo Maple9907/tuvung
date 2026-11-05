@@ -101,3 +101,11 @@ mark{background:none;color:var(--y);font-weight:700}
 .or:before,.or:after{content:"";flex:1;height:1px;background:var(--b)}
 .link{background:none;border:0;color:var(--p);padding:8px 4px;font-size:14px;text-decoration:underline;text-underline-offset:3px}
 .btn:disabled{opacity:.6;cursor:default}
+
+/* Bảng xếp hạng: chống vỡ dòng khi tên dài / Lv cao / XP lớn */
+.lb{gap:6px;overflow:hidden}
+.lb .rk,.lb .you,.lb .lvb,.lb .xpv{flex:none;white-space:nowrap}
+.lb .nn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb .xpv{margin-left:auto;padding-left:6px;font-variant-numeric:tabular-nums}
+.lb.me{color:var(--y)}
+h2{overflow-wrap:anywhere}
