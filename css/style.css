@@ -85,3 +85,19 @@ mark{background:none;color:var(--y);font-weight:700}
 
 @media (max-height:600px){.flip{min-height:200px}.w{font-size:30px}.st b{font-size:17px}}
 @media (prefers-reduced-motion:reduce){.fc,.sw,.sw i{transition:none}}
+
+/* Form đăng nhập / đăng ký (lỗi hiện ngay trong form, không dùng popup của trình duyệt) */
+.fld{display:block;margin-top:10px;text-align:left}
+.fld>span{display:block;font-size:13px;color:var(--m);margin:0 0 4px 2px}
+.fld input[aria-invalid=true]{border-color:var(--r);box-shadow:0 0 0 1px var(--r)}
+.fe{color:var(--r);font-size:12.5px;margin:4px 2px 0}
+.pw{position:relative}.pw input{padding-right:62px}
+.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);height:34px;padding:0 10px;border:0;border-radius:10px;background:none;color:var(--p);font-size:13px;font-weight:600}
+.msg{margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid;font-size:14px;line-height:1.35;text-align:left}
+.msg>span{display:block}.msg>span+span{margin-top:4px}.msg .chip{margin:2px 6px 2px 0;padding:5px 12px;min-height:32px;font-size:13px;color:var(--t)}
+.msg.err{background:rgba(255,107,129,.12);border-color:rgba(255,107,129,.55);color:#ffc7d0}
+.msg.ok{background:rgba(61,220,151,.12);border-color:rgba(61,220,151,.55);color:#bff5dd}
+.or{display:flex;align-items:center;gap:10px;color:var(--m);font-size:12px;margin:12px 0 10px}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--b)}
+.link{background:none;border:0;color:var(--p);padding:8px 4px;font-size:14px;text-decoration:underline;text-underline-offset:3px}
+.btn:disabled{opacity:.6;cursor:default}

@@ -3,7 +3,7 @@ import{W}from'./words.js';
 import{firebaseConfig}from'./firebase-config.js';
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import{getDatabase,ref,set,get,remove,query,orderByChild,limitToLast,serverTimestamp}from'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
-import{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut,signInAnonymously,linkWithPopup,linkWithCredential,signInWithCredential,EmailAuthProvider,deleteUser}from'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut,signInAnonymously,linkWithPopup,linkWithCredential,signInWithCredential,EmailAuthProvider,deleteUser,fetchSignInMethodsForEmail}from'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 const $=s=>document.querySelector(s),h=s=>$('#main').innerHTML=s,esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const L=['A1','A2','B1','B2','C1'],LC={A1:0x3ddc97,A2:0x4cc9f0,B1:0x7c9cff,B2:0xc77dff,C1:0xff6b81};
 const dayOf=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')},day=()=>dayOf(Date.now()),sh=v=>v.split(/[;,(]/)[0].trim(),rnd=a=>a[Math.random()*a.length|0];
@@ -14,7 +14,7 @@ const lvl=()=>Math.floor(Math.sqrt(S.xp/50))+1;
 /* ---------- Firebase (Auth + Realtime DB) ---------- */
 const app=initializeApp(firebaseConfig),db=getDatabase(app),au=getAuth(app);
 let usr=null,uid='',cs='Chưa đăng nhập – dữ liệu chỉ lưu trên máy',tm;
-const EM={'auth/invalid-credential':'Sai email hoặc mật khẩu','auth/email-already-in-use':'Email đã được đăng ký','auth/weak-password':'Mật khẩu tối thiểu 6 ký tự','auth/invalid-email':'Email không hợp lệ','auth/popup-closed-by-user':'Bạn đã đóng cửa sổ đăng nhập','auth/unauthorized-domain':'Domain chưa được thêm vào Authorized domains (xem README)','auth/network-request-failed':'Mất kết nối mạng','auth/admin-restricted-operation':'Chưa bật đăng nhập Ẩn danh (Anonymous) trong Firebase Console','auth/operation-not-allowed':'Phương thức đăng nhập này chưa được bật trong Firebase Console','auth/popup-blocked':'Trình duyệt chặn cửa sổ đăng nhập, hãy cho phép popup','auth/cancelled-popup-request':'Đã huỷ đăng nhập','auth/too-many-requests':'Thử quá nhiều lần, hãy đợi một lúc','auth/missing-password':'Chưa nhập mật khẩu','auth/missing-email':'Chưa nhập email','auth/user-disabled':'Tài khoản đã bị khoá','auth/credential-already-in-use':'Tài khoản này đã được liên kết với người khác','auth/provider-already-linked':'Tài khoản đã được liên kết rồi'};
+const EM={'auth/invalid-credential':'Sai email hoặc mật khẩu','auth/email-already-in-use':'Email đã được đăng ký','auth/weak-password':'Mật khẩu tối thiểu 6 ký tự','auth/invalid-email':'Email không hợp lệ','auth/popup-closed-by-user':'Bạn đã đóng cửa sổ đăng nhập','auth/unauthorized-domain':'Domain chưa được thêm vào Authorized domains (xem README)','auth/network-request-failed':'Mất kết nối mạng','auth/admin-restricted-operation':'Chưa bật đăng nhập Ẩn danh (Anonymous) trong Firebase Console','auth/operation-not-allowed':'Phương thức đăng nhập này chưa được bật trong Firebase Console','auth/popup-blocked':'Trình duyệt chặn cửa sổ đăng nhập, hãy cho phép popup','auth/cancelled-popup-request':'Đã huỷ đăng nhập','auth/too-many-requests':'Thử quá nhiều lần, hãy đợi một lúc','auth/missing-password':'Chưa nhập mật khẩu','auth/missing-email':'Chưa nhập email','auth/user-disabled':'Tài khoản đã bị khoá','auth/credential-already-in-use':'Tài khoản này đã được liên kết với người khác','auth/provider-already-linked':'Tài khoản đã được liên kết rồi','auth/account-exists-with-different-credential':'Email này đã đăng ký bằng cách khác (email/mật khẩu). Hãy đăng nhập bằng email'};
 const err=e=>EM[e.code]||e.code||e.message;
 const refresh=()=>{if(tab=='me'||tab=='home')V[tab]()};
 function merge(a,b){const n=a.upd>=b.upd?a:b,r=Object.assign(def(),n),ca=a.cards||{},cb=b.cards||{};r.cards={...cb,...ca};for(const k in cb)if(ca[k]&&(cb[k].ts||0)>(ca[k].ts||0))r.cards[k]=cb[k];
@@ -54,13 +54,47 @@ let nt;function hint(e){const v=cl(e.target.value),h=$('#nh');clearTimeout(nt);i
 /* ---------- Màn hình đăng nhập đầu tiên: Google / email / khách ---------- */
 let ready=false,gtry=false;
 const guestOn=()=>localStorage.vvg==='1';
-const form=(a,b)=>`<input type="email" placeholder="Email" autocomplete="email" style="margin-top:10px"><input type="password" placeholder="Mật khẩu (từ 6 ký tự)" autocomplete="current-password" style="margin-top:8px"><div class="row"><button class="btn s" data-a="login">${a}</button><button class="btn s" data-a="signup">${b}</button></div><button class="chip" data-a="reset">Quên mật khẩu?</button>`;
+/* ---------- Form đăng nhập / đăng ký dùng chung (màn hình đầu + mục Tôi). Không dùng alert(): lỗi hiện ngay trong form ---------- */
+const AF={m:'in',e:'',p:'',p2:'',show:false,busy:false,fe:{},msg:null},MAILRE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const msgHtml=()=>{const m=AF.msg;if(!m)return'';const a=(m.a||[]).map(x=>`<button type="button" class="chip" data-a="${x.a}" data-v="${x.v||''}">${esc(x.l)}</button>`).join('');
+ return`<div class="msg ${m.t}" role="${m.t=='err'?'alert':'status'}"><span>${esc(m.h)}</span>${a?`<span>${a}</span>`:''}</div>`};
+const setMsg=m=>{AF.msg=m;document.querySelectorAll('[data-af] .mg').forEach(e=>e.innerHTML=msgHtml())};
+const authInner=()=>{const up=AF.m=='up',g=!!(usr&&usr.isAnonymous),d=AF.busy?' disabled':'',
+ fe=n=>AF.fe[n]?`<div class="fe" role="alert">${esc(AF.fe[n])}</div>`:'',iv=n=>AF.fe[n]?' aria-invalid="true"':'';
+ return`<button type="button" class="btn" data-a="google" style="margin-top:0"${d}>${g?'Liên kết với Google':'Tiếp tục với Google'}</button>
+<div class="or">hoặc dùng email</div>
+<div class="seg" role="tablist" style="margin:0"><button type="button" role="tab" aria-selected="${!up}" class="${up?'':'on'}" data-a="am" data-v="in">Đăng nhập</button><button type="button" role="tab" aria-selected="${up}" class="${up?'on':''}" data-a="am" data-v="up">${g?'Liên kết email':'Đăng ký'}</button></div>
+<form novalidate data-f="${up?'up':'in'}">
+<label class="fld"><span>Email</span><input name="e" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="ten@email.com" value="${esc(AF.e)}"${iv('e')}>${fe('e')}</label>
+<label class="fld"><span>Mật khẩu</span><div class="pw"><input name="p" type="${AF.show?'text':'password'}" autocomplete="${up?'new-password':'current-password'}" placeholder="${up?'Tối thiểu 6 ký tự':'Nhập mật khẩu'}" value="${esc(AF.p)}"${iv('p')}><button type="button" class="eye" data-a="eye" aria-pressed="${AF.show}" aria-label="Hiện hoặc ẩn mật khẩu" tabindex="-1">${AF.show?'Ẩn':'Hiện'}</button></div>${fe('p')}</label>
+${up?`<label class="fld"><span>Nhập lại mật khẩu</span><div class="pw"><input name="p2" type="${AF.show?'text':'password'}" autocomplete="new-password" placeholder="Nhập lại mật khẩu" value="${esc(AF.p2)}"${iv('p2')}></div>${fe('p2')}</label>`:''}
+<div class="mg" aria-live="polite">${msgHtml()}</div>
+<button type="submit" class="btn"${d}>${AF.busy?'Đang xử lý…':up?(g?'Liên kết email':'Tạo tài khoản'):'Đăng nhập'}</button>
+${up?'':'<div class="ct"><button type="button" class="link" data-a="reset">Quên mật khẩu?</button></div>'}
+</form>`};
+function authRender(f){document.querySelectorAll('[data-af]').forEach(e=>e.innerHTML=authInner());
+ if(f){const r=$('#gate')||document,i=r.querySelector('[data-af] [name="'+f+'"]');if(i)i.focus()}}
+const aBusy=b=>{AF.busy=b;authRender()};
+const aFormOf=t=>t.closest('[data-af]').querySelector('form');
+const aRd=f=>{const g=n=>f.elements[n]?f.elements[n].value:'';AF.e=g('e').trim();AF.p=g('p');AF.p2=g('p2');return{e:AF.e,p:AF.p,p2:AF.p2}};
+function aVal(d,up){const fe={};
+ if(!d.e)fe.e='Nhập email của bạn';else if(!MAILRE.test(d.e))fe.e='Email chưa đúng định dạng (ví dụ: ten@gmail.com)';
+ if(!d.p)fe.p='Nhập mật khẩu';else if(up&&d.p.length<6)fe.p='Mật khẩu cần tối thiểu 6 ký tự';
+ if(up&&!fe.p&&d.p2!==d.p)fe.p2='Mật khẩu nhập lại chưa khớp';return fe}
+function aFail(x){const c=x.code;
+ if(c=='auth/popup-closed-by-user'||c=='auth/cancelled-popup-request'){AF.msg=null;return}
+ if(c=='auth/email-already-in-use')AF.msg={t:'err',h:'Email này đã được đăng ký rồi.',a:[{l:'Đăng nhập bằng email này',a:'am',v:'in'},{l:'Quên mật khẩu?',a:'reset'}]};
+ else if(c=='auth/invalid-credential'||c=='auth/wrong-password'||c=='auth/user-not-found')AF.msg={t:'err',h:'Email hoặc mật khẩu chưa đúng. Nếu bạn chưa có tài khoản, hãy đăng ký.',a:[{l:'Quên mật khẩu?',a:'reset'},{l:'Tạo tài khoản mới',a:'am',v:'up'}]};
+ else AF.msg={t:'err',h:err(x)}}
+/* Kiểm tra email đã đăng ký chưa ngay khi rời ô email (tab Đăng ký). Nếu project bật "Email enumeration protection" thì Firebase luôn trả rỗng – khi đó lỗi email-already-in-use lúc bấm Tạo tài khoản vẫn bắt được */
+let aCk=0;async function aMail(m){const id=++aCk;if(!MAILRE.test(m))return;
+ try{const r=await fetchSignInMethodsForEmail(au,m);if(id!=aCk||AF.m!='up'||AF.e!=m||!r.length)return;
+  setMsg(r.includes('google.com')&&!r.includes('password')?{t:'err',h:'Email này đã đăng ký bằng Google.',a:[{l:'Đăng nhập bằng Google',a:'google'}]}:{t:'err',h:'Email này đã được đăng ký rồi.',a:[{l:'Đăng nhập bằng email này',a:'am',v:'in'},{l:'Quên mật khẩu?',a:'reset'}]})}catch{}}
 function gate(){let e=$('#gate');const need=!ready||(!usr&&!guestOn());
  if(!need){if(e)e.remove();return}
  const st=ready?'fm':'ld';if(!e){e=document.createElement('div');e.id='gate';document.body.appendChild(e)}if(e.dataset.s===st)return;e.dataset.s=st;
  e.innerHTML=st=='ld'?'<div class="gi ct"><div class="gl">🌌</div><h2>Học Từ Vựng</h2><div class="m">⏳ Đang tải…</div></div>'
- :`<div class="gi ct"><div class="gl">🌌</div><h2>Học Từ Vựng</h2><p class="m" style="margin:0 0 14px">Đăng nhập để đồng bộ tiến độ giữa các thiết bị và thi đua trên bảng xếp hạng.</p><div class="card af" style="text-align:left"><button class="btn" data-a="google" style="margin-top:0">Đăng nhập bằng Google</button>${form('Đăng nhập','Đăng ký')}</div><div class="m" style="margin:6px 0">hoặc</div><button class="btn s" data-a="guest" style="margin-top:0">👤 Chơi với tài khoản khách</button><p class="m" style="margin:10px 0 0">Tài khoản khách vẫn chơi online và xem được bảng xếp hạng. Bạn có thể liên kết Google/email sau để giữ tiến độ.</p></div>`}
-const fv=t=>{const f=t.closest('.af');return[f.querySelector('[type=email]').value.trim(),f.querySelector('[type=password]').value]};
+:`<div class="gi ct"><div class="gl">🌌</div><h2>Học Từ Vựng</h2><p class="m" style="margin:0 0 14px">Đăng nhập để đồng bộ tiến độ giữa các thiết bị và thi đua trên bảng xếp hạng.</p><div class="card" style="text-align:left"><div data-af>${authInner()}</div></div><div class="or" style="margin:12px 0 8px">hoặc</div><button class="btn s" data-a="guest" style="margin-top:0">👤 Chơi với tài khoản khách</button><p class="m" style="margin:10px 0 0">Tài khoản khách vẫn chơi online và xem được bảng xếp hạng. Bạn có thể liên kết Google/email sau để giữ tiến độ.</p></div>`}
 /* Chuyển từ tài khoản khách sang tài khoản khác: xoá dòng của khách trên cloud (tránh trùng trên bảng xếp hạng); nếu đăng nhập thất bại thì ghi lại */
 async function swap(fn){const g=usr&&usr.isAnonymous?uid:'';
  if(g){clearTimeout(tm);await wipe()}
@@ -73,8 +107,8 @@ onAuthStateChanged(au,u=>{usr=u;uid=u?u.uid:'';ready=true;
  gate()});
 setTimeout(()=>{if(!ready){ready=true;gate()}},4000);
 const acct=()=>usr&&!usr.isAnonymous?`<div class="card"><b>☁️ Tài khoản</b><div class="m" style="margin:6px 0">${esc(usr.email||usr.displayName||'')}<br>${cs}</div><button class="btn s" data-a="logout">Đăng xuất</button></div>`
-:usr?`<div class="card af"><b>👤 Tài khoản khách</b><div class="m" style="margin:6px 0">${esc(S.name)}<br>${cs}<br>Liên kết Google/email để giữ tiến độ khi đổi máy hoặc thoát.</div><button class="btn" data-a="google">Liên kết với Google</button>${form('Đăng nhập','Liên kết email')}<button class="chip" data-a="logout">Thoát chế độ khách</button></div>`
-:`<div class="card af"><b>Đăng nhập để đồng bộ & xếp hạng</b><div class="m" style="margin:6px 0">${cs}</div><button class="btn" data-a="google">Đăng nhập bằng Google</button>${form('Đăng nhập','Đăng ký')}</div>`;
+:usr?`<div class="card"><b>👤 Tài khoản khách</b><div class="m" style="margin:6px 0 10px">${esc(S.name)}<br>${cs}<br>Liên kết Google/email để giữ tiến độ khi đổi máy hoặc thoát.</div><div data-af>${authInner()}</div><div class="ct" style="margin-top:6px"><button class="chip" data-a="logout">Thoát chế độ khách</button></div></div>`
+:`<div class="card"><b>Đăng nhập để đồng bộ & xếp hạng</b><div class="m" style="margin:6px 0 10px">${cs}</div><div data-af>${authInner()}</div></div>`;
 /* ---------- Logic ---------- */
 function addXP(n){if(S.last!==day()){const y=dayOf(Date.now()-864e5);S.streak=S.last===y?S.streak+1:1;S.last=day()}S.xp+=n}
 function nxt(c,g){c=Object.assign({n:0,ef:2.5,iv:0,lp:0},c);if(g==0){c.n=0;c.iv=0;c.due=Date.now()+6e4;c.lp++;c.ef=Math.max(1.3,c.ef-.2)}
@@ -250,17 +284,33 @@ const A={go,say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
  async guest(){localStorage.vvg='1';gate();toast('⏳ Đang vào chế độ khách…');
   try{await signInAnonymously(au);toast('Đã vào bằng tài khoản khách ✔')}catch(x){console.warn(x);toast('Chưa vào được chế độ khách online ('+err(x)+'). Đang chơi ngoại tuyến, vẫn xem được bảng xếp hạng.',5000)}
   refresh()},
- async google(){const p=new GoogleAuthProvider();try{if(usr&&usr.isAnonymous){try{await linkWithPopup(usr,p);linked()}catch(x){if(x.code!='auth/credential-already-in-use')throw x;const c=GoogleAuthProvider.credentialFromError(x);await swap(()=>signInWithCredential(au,c))}}else await signInWithPopup(au,p)}catch(x){alert(err(x))}},
- async login(v,t){const[e,p]=fv(t);try{await swap(()=>signInWithEmailAndPassword(au,e,p))}catch(x){alert(err(x))}},
- async signup(v,t){const[e,p]=fv(t);try{if(usr&&usr.isAnonymous){await linkWithCredential(usr,EmailAuthProvider.credential(e,p));linked()}else await createUserWithEmailAndPassword(au,e,p)}catch(x){alert(err(x))}},
- async reset(v,t){const[e]=fv(t);if(!e)return alert('Nhập email trước');try{await sendPasswordResetEmail(au,e);alert('Đã gửi email đặt lại mật khẩu')}catch(x){alert(err(x))}},
- async logout(){const an=usr&&usr.isAnonymous;if(!confirm(an?'Thoát chế độ khách? Tiến độ của tài khoản khách sẽ MẤT và không khôi phục được nếu bạn chưa liên kết Google/email.':'Đăng xuất? Dữ liệu trên máy sẽ được xoá (bản trên cloud vẫn giữ).'))return;
+ am(v){AF.m=v=='up'?'up':'in';AF.fe={};AF.msg=null;authRender()},
+ eye(){AF.show=!AF.show;document.querySelectorAll('[data-af] .pw input').forEach(i=>i.type=AF.show?'text':'password');document.querySelectorAll('[data-af] .eye').forEach(b=>{b.textContent=AF.show?'Ẩn':'Hiện';b.setAttribute('aria-pressed',AF.show)})},
+ async google(){if(AF.busy)return;setMsg(null);aBusy(true);const p=new GoogleAuthProvider();
+  try{if(usr&&usr.isAnonymous){try{await linkWithPopup(usr,p);linked()}catch(x){if(x.code!='auth/credential-already-in-use')throw x;const c=GoogleAuthProvider.credentialFromError(x);await swap(()=>signInWithCredential(au,c))}}else await signInWithPopup(au,p)}catch(x){aFail(x)}
+  aBusy(false)},
+ async login(v,t){if(AF.busy)return;const d=aRd(aFormOf(t)),fe=aVal(d,0);AF.fe=fe;AF.msg=null;
+  if(Object.keys(fe).length)return authRender(Object.keys(fe)[0]);
+  aBusy(true);try{await swap(()=>signInWithEmailAndPassword(au,d.e,d.p));AF.p=AF.p2='';toast('Đăng nhập thành công ✔')}catch(x){aFail(x)}aBusy(false)},
+ async signup(v,t){if(AF.busy)return;const d=aRd(aFormOf(t)),fe=aVal(d,1);AF.fe=fe;AF.msg=null;
+  if(Object.keys(fe).length)return authRender(Object.keys(fe)[0]);
+  aBusy(true);try{if(usr&&usr.isAnonymous){await linkWithCredential(usr,EmailAuthProvider.credential(d.e,d.p));linked()}else{await createUserWithEmailAndPassword(au,d.e,d.p);toast('Đăng ký thành công 🎉 Chào mừng bạn!',3500)}AF.p=AF.p2=''}catch(x){aFail(x)}aBusy(false)},
+ async reset(v,t){if(AF.busy)return;const d=aRd(aFormOf(t));AF.fe={};AF.msg=null;
+  if(!MAILRE.test(d.e)){AF.fe.e=d.e?'Email chưa đúng định dạng (ví dụ: ten@gmail.com)':'Nhập email để nhận liên kết đặt lại mật khẩu';return authRender('e')}
+  aBusy(true);try{await sendPasswordResetEmail(au,d.e);AF.msg={t:'ok',h:'Đã gửi hướng dẫn đặt lại mật khẩu tới '+d.e+' (nếu email này đã đăng ký). Nhớ kiểm tra cả mục Thư rác.'}}catch(x){aFail(x)}aBusy(false)},
+ logout(){const an=usr&&usr.isAnonymous;modal(`<h3>${an?'Thoát chế độ khách?':'Đăng xuất?'}</h3><p class="m" style="margin:0 0 12px">${an?'Tiến độ của tài khoản khách sẽ <b>mất</b> và không khôi phục được nếu bạn chưa liên kết Google/email.':'Dữ liệu trên máy sẽ được xoá (bản trên cloud vẫn giữ).'}</p><div class="row"><button class="btn s" data-a="closeSheet">Huỷ</button><button class="btn" data-a="logout2">${an?'Thoát':'Đăng xuất'}</button></div>`)},
+ async logout2(){closeSheet();const an=usr&&usr.isAnonymous;
   localStorage.removeItem('vvg');localStorage.removeItem('vvao');clearTimeout(tm);
   try{if(an){await wipe();await deleteUser(usr)}else await push()}catch{}
+  AF.m='in';AF.p=AF.p2='';AF.fe={};AF.msg=null;
   try{await signOut(au)}catch{}S=def();localStorage.vv=JSON.stringify(S);go('me')},
  bak(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='hoc-tu-vung-backup.json';a.click()},
  rest(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=async()=>{try{const d=JSON.parse(await i.files[0].text());if(typeof d.xp!='number')throw 0;S=merge(S,d);save();go('me')}catch{alert('File không hợp lệ')}};i.click()}};
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t){e.stopPropagation();A[t.dataset.a](t.dataset.v,t)}});
+document.addEventListener('submit',e=>{const f=e.target.closest&&e.target.closest('form[data-f]');if(!f)return;e.preventDefault();A[f.dataset.f=='up'?'signup':'login'](null,f)});
+addEventListener('input',e=>{const t=e.target;if(!t.name||!t.closest||!t.closest('[data-af]'))return;AF[t.name]=t.value;
+ if(AF.fe[t.name]){delete AF.fe[t.name];t.removeAttribute('aria-invalid');const x=t.closest('label').querySelector('.fe');if(x)x.remove()}});
+addEventListener('focusout',e=>{const t=e.target;if(t.name=='e'&&AF.m=='up'&&t.closest&&t.closest('[data-af]'))aMail(t.value.trim())});
 const isIn=e=>e&&e.matches&&e.matches('input:not([type=range])');
 addEventListener('focusin',e=>{if(isIn(e.target))document.body.classList.add('kb')});
 addEventListener('focusout',()=>setTimeout(()=>{if(!isIn(document.activeElement))document.body.classList.remove('kb')},60));

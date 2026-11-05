@@ -28,3 +28,9 @@ Tên không được trùng (không phân biệt hoa/thường, khoảng trắng
 ## Cấu hình Firebase cho tài khoản khách
 
 Vào Firebase Console → **Authentication → Sign-in method → Anonymous → Enable**. Không cần sửa `database.rules.json`: tài khoản khách cũng là người dùng đã xác thực (`auth != null`), còn bảng xếp hạng cho phép đọc công khai.
+
+## Đăng nhập / đăng ký bằng email
+
+- Form có 2 tab **Đăng nhập** / **Đăng ký**, kiểm tra ngay trên form (email hợp lệ, mật khẩu ≥ 6 ký tự, nhập lại mật khẩu), nút hiện/ẩn mật khẩu và trạng thái "Đang xử lý…" (khoá nút để không bấm trùng). Lỗi hiện ngay trong form, không còn popup của trình duyệt.
+- Tab Đăng ký kiểm tra email đã đăng ký chưa khi rời ô email; nếu Firebase đang bật **Email enumeration protection** thì việc kiểm tra sớm này không có kết quả, nhưng bấm **Tạo tài khoản** vẫn báo "Email đã được đăng ký" kèm nút chuyển sang đăng nhập.
+- Cần bật **Authentication → Sign-in method → Email/Password** trong Firebase Console.
