@@ -45,6 +45,7 @@ export class VPlayer {
     this.key = /^[A-Za-z-]+\|/.test(l0) ? l0 : '';   /* phụ đề đã chọn: 'mãNgônNgữ|asr' (asr = tự tạo) · '' = app tự chọn tiếng Anh */
     this.tl = l0 === 'vi' ? 'vi' : ls.get('vvct', '');   /* ngôn ngữ YouTube dịch tự động sang ('' = không dịch) */
     this.fsz = +ls.get('vvcf', '0') || 0;
+    this.lp = ls.get('vvlp', '0') == '1'; this.lpT = 0;   /* Lặp lại video đang phát */
     this.done = false; this.pw = false; this.try = 0;
     this.tracks = []; this.tls = []; this.cur = ''; this.cst = 'idle'; this.ack = null;   /* cst: idle | wait | ok | none */
     this.ht = this.rt = this.ct = this.qt = 0;
@@ -92,6 +93,7 @@ export class VPlayer {
     const b = this.vb.classList, on = s === 1 || s === 3;
     b.toggle('pl', on); b.toggle('bf', s === 3); b.toggle('en', s === 0);
     if (on) { b.remove('raw'); clearTimeout(this.rt) }
+    if (s === 0 && this.lp && this.p) { try { this.p.playVideoAt(this.p.getPlaylistIndex()) } catch { try { this.p.seekTo(0, true); this.p.playVideo() } catch { } } }   /* dự phòng nếu lỡ nhịp tick */
     if (s === 1) {
       const y = this.vb.querySelector('#ye'); if (y) { delete y.dataset.err; y.hidden = true } b.remove('err');
       const id = this.vidId(); if (id !== this.vid) { this.vid = id; this.applyPrefs() }
@@ -148,6 +150,11 @@ export class VPlayer {
     let s; try { s = p.getPlayerState() } catch { return }
     if (s !== this.st) this.state(s);
     if (!this.drag && Date.now() > this.hold) this.paintTime();
+    /* Lặp lại: video nằm trong playlist nên khi hết YouTube sẽ tự nhảy sang video kế. Vì vậy tua về 0 trước khi hết một chút
+       (ngưỡng tăng theo tốc độ phát để tick 250ms không bị lỡ). */
+    if (this.lp && s === 1 && !this.drag && Date.now() > this.lpT) {
+      try { const d = p.getDuration(); if (d > 3 && d - p.getCurrentTime() < .35 + .25 * this.rate) { this.lpT = Date.now() + 1500; p.seekTo(0, true) } } catch { }
+    }
     try { this.bf.style.width = Math.min(100, (p.getVideoLoadedFraction() || 0) * 100) + '%' } catch { }
   }
   paintTime(t, d) {
@@ -155,7 +162,7 @@ export class VPlayer {
     d = d > 0 ? d : 0; t = t || 0;
     const f = d ? Math.min(1, t / d) : 0;
     this.pf.style.width = f * 100 + '%'; this.th.style.left = f * 100 + '%';
-    this.tt.textContent = clk(t) + ' / ' + clk(d) + (this.rate !== 1 ? ' · ' + this.rate + '×' : '');
+    this.tt.textContent = clk(t) + ' / ' + clk(d) + (this.rate !== 1 ? ' · ' + this.rate + '×' : '') + (this.lp ? ' · 🔁' : '');
     this.sk.setAttribute('aria-valuenow', Math.round(t)); this.sk.setAttribute('aria-valuemax', Math.round(d));
     this.sk.setAttribute('aria-valuetext', clk(t) + ' trên ' + clk(d));
   }
@@ -255,6 +262,11 @@ export class VPlayer {
 
   /* ---------- Bảng cài đặt (nằm trong khung .vb để vẫn thấy khi phóng to) ----------
      Dạng danh sách vào từng mục như YouTube (main → rate | q | cc | fsz) để vừa khung video nhỏ trên điện thoại. */
+  setLoop(on) {
+    this.lp = on; ls.set('vvlp', on ? '1' : '0'); this.lpT = 0;
+    this.paintMenu(); this.paintTime();
+    if (this.o.toast) this.o.toast(on ? '🔁 Lặp lại video này: Bật' : 'Đã tắt lặp lại');
+  }
   setMenu(on) {
     this.menu = on; this.mv = 'main'; this.vb.classList.toggle('mo', on); this.vm.hidden = !on;
     if (on) { this.paintMenu(); clearTimeout(this.ht) } else this.show();
@@ -268,6 +280,7 @@ export class VPlayer {
     if (mv === 'main') {
       const row = (k, val) => `<button class="mrow" data-c="mv" data-v="${k}"><span>${TT[k]}</span><span>${esc(val)} ›</span></button>`;
       body = row('rate', this.rate == 1 ? 'Chuẩn (1×)' : this.rate + '×')
+        + `<button class="mrow" data-c="lp" role="switch" aria-checked="${this.lp}"><span>Lặp lại</span><span>${this.lp ? '✓ Bật' : 'Tắt'}</span></button>`
         + row('q', this.q === 'auto' ? 'Tự động' + (QL[cur] ? ' (' + QL[cur] + ')' : '') : (QL[this.q] || this.q))
         + row('cc', this.cc ? this.ccName() : 'Tắt')
         + row('fsz', (FSZ.find(x => x[0] === this.fsz) || FSZ[1])[1]);
@@ -314,6 +327,7 @@ export class VPlayer {
       else if (c === 'mx') this.setMenu(false);
       else if (c === 'mv') { this.mv = v; this.paintMenu() }
       else if (c === 'mb') { this.mv = this.mv === 'tl' ? 'cc' : 'main'; this.paintMenu() }
+      else if (c === 'lp') this.setLoop(!this.lp);
       else if (c === 'rate') { this.mv = 'main'; this.setRate(+v) }
       else if (c === 'q') { this.mv = 'main'; this.setQ(v) }
       else if (c === 'sub') { this.setCC(false); this.setMenu(false) }

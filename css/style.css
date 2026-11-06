@@ -173,10 +173,8 @@ h2{overflow-wrap:anywhere}
 .ln.bk{margin-top:12px}.ln.h{margin-top:12px;margin-bottom:2px}
 .lx{flex:1;min-width:0}
 .ln .ts{flex:none;width:46px;margin-top:5px;padding:2px 0;border:0;border-radius:7px;background:none;color:var(--m);font-size:11.5px;font-variant-numeric:tabular-nums;text-align:left;line-height:1.4}
-.ln .ts.pin{color:var(--g);font-weight:700}
 .ln.on{background:rgba(124,156,255,.2);box-shadow:inset 3px 0 0 var(--p)}
 .ln.on .ts{color:var(--t)}
-.tx.cal .ts{color:var(--y);border:1px dashed var(--y);text-align:center;width:50px;padding:2px 0}
 .lbar{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}.ls{font-size:12.5px;margin:0 0 8px}
 .hb.on{background:rgba(124,156,255,.35);border-color:var(--p)}
 .tw{border-radius:4px}.tw:active{background:rgba(124,156,255,.35)}

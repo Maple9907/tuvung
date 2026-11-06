@@ -26,7 +26,7 @@
 - Chữ của video hiện bên dưới, dòng đang nói được tô sáng và tự cuộn theo. Chạm vào giờ ở đầu dòng để tua video tới câu đó.
 - Chạm vào một từ tiếng Anh để nghe phát âm.
 - Nút **Ẩn/Hiện** để nghe trước, xem chữ sau. Nút **Tự cuộn** để bật/tắt cuộn theo video.
-- Nếu dòng chữ lệch so với video, bấm **Ghim** rồi chạm giờ ở đầu câu đang đọc để chỉnh lại. **Xoá mốc** để bỏ.
+- Giờ có dấu ~ là giờ ước lượng nên có thể lệch vài giây; chạm vào giờ ở đầu dòng để tua tới câu đó.
 - Khung video chỉ có video, không hiện tiêu đề hay gợi ý của YouTube:
   - Chạm vào video để phát hoặc tạm dừng.
   - Thanh tua kéo được, hiện giờ hiện tại và tổng thời gian.

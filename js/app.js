@@ -306,24 +306,19 @@ let NMD=localStorage.vvm=='d'?'d':'q',NP=null,NI=+localStorage[NM[NMD].ik]||0,NN
 const nM=()=>NM[NMD];
 /* số file phụ đề ứng với video thứ i của playlist (đối chiếu theo ID khi biết, không thì theo thứ tự) */
 const nCi=i=>{const m=nM();if(m.ids&&NPLs&&NPLs[i]){const j=m.ids.indexOf(NPLs[i]);if(j>=0)return j}return i};
-let NL=[],NTm=[],NEs=[],NAn={},NCur=-1,ND=0,NF=localStorage.vvlf!='0',NCal=false,NPz=0,NTk=0;/* NL dòng nội dung · NTm giờ từng dòng · NAn mốc người dùng ghim · NF tự cuộn · NCal chế độ ghim mốc */
+let NL=[],NTm=[],NEs=[],NAn={},NCur=-1,ND=0,NF=localStorage.vvlf!='0',NPz=0,NTk=0;/* NL dòng nội dung · NTm giờ từng dòng · NAn (luôn rỗng, chỉ để buildTimes dùng) · NF tự cuộn */
+try{Object.keys(localStorage).filter(k=>/^vvaq?\d+$/.test(k)).forEach(k=>localStorage.removeItem(k))}catch{}/* dọn mốc đã ghim từ bản cũ (tính năng Ghim đã bỏ) */
 const ytLoad=()=>YTL||(YTL=tmo(new Promise((ok,no)=>{if(window.YT&&YT.Player)return ok();window.onYouTubeIframeAPIReady=ok;const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';s.onerror=no;document.head.appendChild(s)}),8000).catch(e=>{YTL=null;throw e}));
 const lnHtml=l=>l.s.split(/([A-Za-z][A-Za-z'’-]*)/).map((x,i)=>i%2?`<span class="tw" data-a="lwd" data-v="${esc(x)}">${esc(x)}</span>`:esc(x)).join('');
 const txFmt=L=>L.map((l,i)=>`<div class="ln${l.k=='h'?' h':''}${l.b?' bk':''}" data-i="${i}"><button class="ts" data-a="lsk" data-v="${i}" aria-label="Tua tới câu này"></button><div class="lx">${l.k=='h'?`<h3>${esc(l.s)}</h3>`:lnHtml(l)}</div></div>`).join('');
-const akey=()=>nM().ak+NI;
-function aLoad(){NAn={};try{const o=JSON.parse(localStorage[akey()]||'null');if(o&&o.n==NL.length)NAn=o.a||{}}catch{}}
-function aSave(){try{if(Object.keys(NAn).length)localStorage[akey()]=JSON.stringify({n:NL.length,a:NAn});else localStorage.removeItem(akey())}catch{}}
-function nTimes(){const r=buildTimes(NL,ND,NAn);NTm=r.times;NEs=r.est;document.querySelectorAll('#tx .ln').forEach(e=>{const i=+e.dataset.i,b=e.firstChild;b.textContent=(NEs[i]?'~':'')+fmtT(NTm[i]);b.classList.toggle('pin',NAn[i]!=null)});nSt()}
-function nSt(){const e=$('#ls');if(!e)return;const k=Object.keys(NAn).length,real=NL.some(l=>l.t!=null);e.textContent=NCal?'📍 Đang ghim: nghe tới câu nào thì chạm giờ ở đầu câu đó':(real?'⏱ Có giờ chuẩn trong file':(k?'📍 '+k+' mốc đã ghim · còn lại là ước lượng (~)':'⏱ Giờ ước lượng (~). Chưa khớp? Bấm “📍 Ghim” để chỉnh.'))}
+function nTimes(){const r=buildTimes(NL,ND,NAn);NTm=r.times;NEs=r.est;document.querySelectorAll('#tx .ln').forEach(e=>{const i=+e.dataset.i,b=e.firstChild;b.textContent=(NEs[i]?'~':'')+fmtT(NTm[i])});nSt()}
+function nSt(){const e=$('#ls');if(!e)return;e.textContent=NL.some(l=>l.t!=null)?'⏱ Có giờ chuẩn trong file':'⏱ Giờ ước lượng (~), có thể lệch vài giây'}
 function nMark(i,scroll){const tx=$('#tx');if(!tx)return;const o=tx.querySelector('.ln.on');if(o)o.classList.remove('on');NCur=i;const e=i>=0&&tx.querySelector('.ln[data-i="'+i+'"]');if(!e)return;e.classList.add('on');if(scroll&&NF&&!NH&&Date.now()>NPz){const v=$('.vid'),m=$('#main'),nv=$('nav');if(!v||!m)return;const top=v.getBoundingClientRect().bottom,bot=nv?nv.getBoundingClientRect().top:innerHeight,want=top+(bot-top)*.3;m.scrollTo({top:m.scrollTop+e.getBoundingClientRect().top-want,behavior:'smooth'})}}
 function nTick(){if(tab!='nghe'||!$('#tx')){clearInterval(NTk);NTk=0;return}if(!NP||!NP.getCurrentTime||!NTm.length)return;let t,d;try{t=NP.getCurrentTime();d=NP.getDuration()}catch{return}if(d>0&&Math.abs(d-ND)>1){ND=d;nTimes()}const i=findIdx(NTm,t);if(i!=NCur)nMark(i,true)}
-function lsk(v){const i=+v;if(!(i>=0&&i<NL.length))return;if(NCal){let t=0;try{t=NP.getCurrentTime()}catch{return}NAn[i]=Math.max(0,t-.8);aSave();nTimes();nMark(findIdx(NTm,t),false);toast('📍 Đã ghim câu này ở '+fmtT(t));return}
- try{NP.seekTo(NTm[i],true);NP.playVideo()}catch{toast('Video chưa sẵn sàng');return}NPz=0;nMark(i,true)}
-function lcal(v,b){NCal=!NCal;b.classList.toggle('on',NCal);const tx=$('#tx');if(tx)tx.classList.toggle('cal',NCal);nSt()}
+function lsk(v){const i=+v;if(!(i>=0&&i<NL.length))return;try{NP.seekTo(NTm[i],true);NP.playVideo()}catch{toast('Video chưa sẵn sàng');return}NPz=0;nMark(i,true)}
 function lfo(v,b){NF=!NF;try{localStorage.vvlf=NF?'1':'0'}catch{}b.textContent=NF?'🔄 Tự cuộn: Bật':'⏸ Tự cuộn: Tắt';if(NF)NPz=0}
-function lclr(){if(!Object.keys(NAn).length){toast('Chưa có mốc nào');return}NAn={};aSave();nTimes();toast('Đã xoá mốc ghim')}
 async function txLoad(){const el=$('#tx');if(!el)return;const i=NI,c=nCi(i),n=String(c+1).padStart(2,'0');NCl=c;el.dataset.i=i;el.innerHTML='<div class="m">⏳ Đang tải nội dung…</div>';NL=[];NTm=[];NCur=-1;ND=0;NAn={};
- try{const r=await fetch(nM().dir+n+'.txt');if(!r.ok)throw 0;const t=await r.text();if(i!=NI||!$('#tx'))return;NL=parseTx(t);aLoad();el.innerHTML=txFmt(NL);try{ND=NP.getDuration()||0}catch{}nTimes();if(!NTk)NTk=setInterval(nTick,250)}
+ try{const r=await fetch(nM().dir+n+'.txt');if(!r.ok)throw 0;const t=await r.text();if(i!=NI||!$('#tx'))return;NL=parseTx(t);el.innerHTML=txFmt(NL);try{ND=NP.getDuration()||0}catch{}nTimes();if(!NTk)NTk=setInterval(nTick,250)}
  catch{if(i==NI&&$('#tx'))$('#tx').innerHTML='<div class="m">Video này chưa có phụ đề'+(NMD=='q'?'.':' (thêm file <b>'+nM().dir+n+'.txt</b>).')+'</div>'}}
 /* Tên hiển thị ngắn gọn (thay tiêu đề YouTube): video 6–9 là loại Nghe + Đọc, còn lại là Nghe. X = số thứ tự video (X/47) */
 const NRD=[6,7,8,9],nTitle=i=>NMD=='q'?'Luyện Nghe 5 Phút Bài '+(i+1):(NRD.includes(i+1)?'Luyện Nghe Và Đọc Bài ':'Luyện Nghe Bài ')+(i+1);
@@ -343,12 +338,12 @@ function vfs(){const v=$('.vb');if(!v)return;if(vfsOn())return vfsOff();
  try{const p=rq.call(v);if(p&&p.then)p.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch{}}).catch(pseudo)}catch{pseudo()}}
 ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{if(!fsEl())try{screen.orientation.unlock()}catch{}vfsUI()}));
 addEventListener('keydown',e=>{if(e.key=='Escape'&&vfsOn())vfsOff()});
-V.nghe=()=>{vfsOff();NVP&&NVP.destroy();NVP=null;try{NP&&NP.destroy()}catch{}NP=null;NPLs=null;NCl=-1;NCal=false;
+V.nghe=()=>{vfsOff();NVP&&NVP.destroy();NVP=null;try{NP&&NP.destroy()}catch{}NP=null;NPLs=null;NCl=-1;
  h(`<div class="vid"><div class="vb" id="vb"><div id="yt"></div><div class="ye m" id="ye">⏳ Đang tải video…</div></div></div>
 <div class="card"><div class="seg"><button data-a="lmode" data-v="q"${NMD=='q'?' class="on"':''}>⏱ Nghe 5 phút</button><button data-a="lmode" data-v="d"${NMD=='d'?' class="on"':''}>🎧 Nghe sâu</button></div><div class="lh"><button class="x" data-a="lpv" aria-label="Video trước">‹</button><div class="ct" style="flex:1;min-width:0"><b id="lc"></b><div class="m lt" id="lt"></div></div><button class="x" data-a="lnx" aria-label="Video sau">›</button></div></div>
 <div class="card"><div class="lh"><b>📖 Nội dung</b><button class="hb" data-a="lsh">${NH?'👁 Hiện':'🙈 Ẩn'}</button></div>
-<div class="lbar"><button class="hb" data-a="lfo">${NF?'🔄 Tự cuộn: Bật':'⏸ Tự cuộn: Tắt'}</button><button class="hb${NCal?' on':''}" data-a="lcal">📍 Ghim</button><button class="hb" data-a="lclr">↺ Xoá mốc</button></div><div class="m ls" id="ls"></div>
-<div id="tx" class="tx${NCal?' cal':''}"${NH?' hidden':''}></div></div>`);
+<div class="lbar"><button class="hb" data-a="lfo">${NF?'🔄 Tự cuộn: Bật':'⏸ Tự cuộn: Tắt'}</button></div><div class="m ls" id="ls"></div>
+<div id="tx" class="tx"${NH?' hidden':''}></div></div>`);
  NVP=new VPlayer($('#vb'),{toast});vfsUI();nUI();txLoad();
  ytLoad().then(()=>{if(tab!='nghe'||!$('#yt'))return;
   NP=new YT.Player('yt',{host:'https://www.youtube-nocookie.com',width:'100%',height:'100%',playerVars:{listType:'playlist',list:nM().pl,index:NI,playsinline:1,rel:0,modestbranding:1,fs:0,controls:0,disablekb:1,iv_load_policy:3,...VPlayer.vars(),...(location.protocol.startsWith('http')?{origin:location.origin}:{})},
@@ -358,7 +353,7 @@ V.nghe=()=>{vfsOff();NVP&&NVP.destroy();NVP=null;try{NP&&NP.destroy()}catch{}NP=
 ['touchstart','wheel'].forEach(ev=>$('#main').addEventListener(ev,()=>{NPz=Date.now()+6000},{passive:true}));/* người dùng tự cuộn thì tạm ngưng tự cuộn 6 giây */
 /* ---------- Actions ---------- */
 function lmode(v){if(v!='q'&&v!='d'||v==NMD)return;NMD=v;try{localStorage.vvm=v}catch{}NI=+localStorage[nM().ik]||0;NN=nM().n;if(NI>=NN)NI=0;V.nghe();const m=$('#main');if(m)m.scrollTop=0}
-const A={go,vfs,lmode,lpv(){nSet(NI-1);try{NP.previousVideo()}catch{}},lnx(){nSet(NI+1);try{NP.nextVideo()}catch{}},lwd:w=>speak(w),lsk,lcal,lfo,lclr,lsh(v,t){NH=!NH;try{localStorage.vvlh=NH?'1':'0'}catch{}$('#tx').hidden=NH;t.textContent=NH?'👁 Hiện':'🙈 Ẩn'},ls(){LS[Q[qi]].seen=1;V.learn()},ln(){qi++;V.learn()},lp(v){lfin(+v===EX.i)},lc(){lfin(matchW($('#ti').value,W[EX.i].w))},li(){lfin(false)},say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
+const A={go,vfs,lmode,lpv(){nSet(NI-1);try{NP.previousVideo()}catch{}},lnx(){nSet(NI+1);try{NP.nextVideo()}catch{}},lwd:w=>speak(w),lsk,lfo,lsh(v,t){NH=!NH;try{localStorage.vvlh=NH?'1':'0'}catch{}$('#tx').hidden=NH;t.textContent=NH?'👁 Hiện':'🙈 Ẩn'},ls(){LS[Q[qi]].seen=1;V.learn()},ln(){qi++;V.learn()},lp(v){lfin(+v===EX.i)},lc(){lfin(matchW($('#ti').value,W[EX.i].w))},li(){lfin(false)},say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
  mt(v){mt=v;V.me()},closeSheet,
  music(){S.music=!S.music;save();S.music&&tab!='nghe'?musOn():musOff();topUI();if(tab=='me')V.me()},
  async install(){if(dip){const p=dip;dip=null;p.prompt();try{await p.userChoice}catch{}topUI();return}
