@@ -152,6 +152,14 @@ h2{overflow-wrap:anywhere}
 .mrow{display:flex;width:100%;height:34px;align-items:center;justify-content:space-between;gap:10px;padding:0 2px;border:0;border-bottom:1px solid rgba(255,255,255,.08);background:none;color:var(--t);font-size:14px;text-align:left}
 .mrow span:last-child{color:var(--m);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mi{max-width:560px;margin:0 auto}
+/* Danh sách chọn kiểu YouTube (Phụ đề / Dịch tự động): dấu ✓ bên trái */
+.mo{margin:0 -4px}
+.mopt{display:flex;width:100%;min-height:36px;align-items:center;gap:8px;padding:0 4px;border:0;border-bottom:1px solid rgba(255,255,255,.06);background:none;color:var(--t);font-size:14.5px;text-align:left}
+.mopt .ck{flex:none;width:22px;font-style:normal;font-weight:700;color:var(--p)}
+.mopt span{flex:1;min-width:0}
+.mopt em{flex:none;font-style:normal;color:var(--m);font-size:13px}
+.mopt.on span{font-weight:700}
+.mopt:active{background:rgba(255,255,255,.08)}
 .mt{margin:4px 0 5px;font-size:12px;font-weight:600;color:var(--m)}.mt~.mt{margin-top:10px}
 .mc{display:flex;flex-wrap:wrap;gap:6px}
 .mchip{height:32px;max-width:100%;padding:0 12px;border-radius:16px;border:1px solid var(--b);background:rgba(255,255,255,.08);color:var(--t);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
