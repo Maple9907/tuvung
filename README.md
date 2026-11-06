@@ -23,30 +23,3 @@ Chưa đăng nhập vẫn học bình thường, tiến độ được lưu ngay
 
 Tên không được trùng (không phân biệt hoa/thường, khoảng trắng thừa được gộp), kiểm tra ngay khi gõ. Mỗi tên được giữ chỗ trong `names/<tên>` của Realtime Database. Mỗi tài khoản đổi tên tối đa 1 lần / 24 giờ (ô đổi tên bị làm mờ trong thời gian đó).
 
-**Sau khi cập nhật, cần đăng lại Rules**: `firebase deploy --only database` hoặc dán nội dung `database.rules.json` vào Firebase Console → Realtime Database → Rules → Publish.
-
-## Cấu hình Firebase cho tài khoản khách
-
-Vào Firebase Console → **Authentication → Sign-in method → Anonymous → Enable**. Không cần sửa `database.rules.json`: tài khoản khách cũng là người dùng đã xác thực (`auth != null`), còn bảng xếp hạng cho phép đọc công khai.
-
-## Đăng nhập / đăng ký bằng email
-
-- Form có 2 tab **Đăng nhập** / **Đăng ký**, kiểm tra ngay trên form (email hợp lệ, mật khẩu ≥ 6 ký tự, nhập lại mật khẩu), nút hiện/ẩn mật khẩu và trạng thái "Đang xử lý…" (khoá nút để không bấm trùng). Lỗi hiện ngay trong form, không còn popup của trình duyệt.
-- Tab Đăng ký kiểm tra email đã đăng ký chưa khi rời ô email; nếu Firebase đang bật **Email enumeration protection** thì việc kiểm tra sớm này không có kết quả, nhưng bấm **Tạo tài khoản** vẫn báo "Email đã được đăng ký" kèm nút chuyển sang đăng nhập.
-- Cần bật **Authentication → Sign-in method → Email/Password** trong Firebase Console.
-
-
-## Bản v3 – thay đổi lõi học (giữ nguyên đăng nhập, Firebase, bảng xếp hạng, nhạc, thiên hà)
-- Lịch ôn: SM-2 → FSRS (js/vendor/fsrs.mjs, MIT). Thẻ cũ tự quy đổi khi ôn lần kế tiếp, tiến độ cũ giữ nguyên (words.js giữ thứ tự cũ).
-- Từ mới được kiểm tra ngay (đúng 2 lần mới vào lịch ôn); ôn tập tự chấm đúng/sai.
-- Game không đổi lịch khi đúng; sai thì từ ôn sớm hơn. XP game giảm.
-- Three.js/Firebase tải động: lỗi CDN không làm kẹt phần học.
-- Dữ liệu: `python3 tools/build_data.py` (pip install wordfreq) rồi `python3 tools/patch_app.py` chỉ dùng để dựng lại từ bản gốc.
-
-## Bản v3.1 – vá lỗi sau khi đối chiếu với bản main
-- **Lỗi `LS`**: trạng thái từng từ trong phiên học không bao giờ được xoá, nên app mở liên tục nhiều ngày sẽ bỏ qua bước chấm lịch của thẻ ôn. Nay xoá mỗi khi dựng lại hàng đợi, và hàng đợi đã xong của ngày hôm trước sẽ được dựng lại.
-- **Phiên âm**: trả về phiên âm Anh-Anh gốc (v3 từng đổi 4.034 từ sang kiểu Mỹ, lệch với giọng đọc mặc định en-GB). `tools/ipa.py` đã bỏ, `build_data.py` giữ phiên âm gốc.
-- **Khởi động**: three.js và Firebase tải song song, mạng treo chờ tối đa 8 giây (trước đó 16 giây).
-- **Tự động đọc khi học**: bật mặc định (Tôi → Học). Người dùng cũ được bật một lần khi cập nhật (đánh dấu bằng trường `ap`); tắt đi thì giữ nguyên, kể cả khi đồng bộ cloud.
-- **Bỏ hai cài đặt "Ẩn từ chức năng" và "Ẩn từ hiếm"**: người học học hết toàn bộ từ trong cấp độ đã chọn (từ chức năng vẫn được xếp xuống cuối mỗi cấp).
-- `sw.js` tăng lên `vv-v10` để máy đã cài nhận `words.js` mới.
