@@ -26,7 +26,7 @@ const IST = svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 
 const IFS0 = svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>');
 
 /* Phần giao diện chèn vào khung .vb (nút phóng to giữ data-a="vfs" để app.js xử lý) */
-const MARK = `<div class="vs" data-c="tap"><i class="vpl">${IPL}</i><i class="vsp"></i></div>
+const MARK = `<i class="vtm"></i><div class="vs" data-c="tap"><i class="vpl">${IPL}</i><i class="vsp"></i></div>
 <div class="vc"><div class="vsk" tabindex="0" role="slider" aria-label="Thanh tua video" aria-valuemin="0"><i class="bf"></i><i class="pf"></i><i class="th"></i></div>
 <div class="vr"><button class="vbn pp" data-c="pp" aria-label="Phát / Tạm dừng">${IPL}</button><span class="vt">0:00 / 0:00</span><span class="gr"></span>
 <button class="vbn cc" data-c="cc" aria-label="Bật/tắt phụ đề" aria-pressed="false">${ICC}</button>
@@ -51,7 +51,7 @@ export class VPlayer {
     vb.insertAdjacentHTML('beforeend', MARK);
     const $ = s => vb.querySelector(s);
     this.sk = $('.vsk'); this.bf = $('.vsk .bf'); this.pf = $('.vsk .pf'); this.th = $('.vsk .th');
-    this.tt = $('.vt'); this.pp = $('.pp'); this.ccb = $('.vbn.cc'); this.vm = $('.vm');
+    this.tm = $('.vtm'); this.tt = $('.vt'); this.pp = $('.pp'); this.ccb = $('.vbn.cc'); this.vm = $('.vm');
     this.ratio = (() => { try { const [a, b] = getComputedStyle(vb.parentNode).getPropertyValue('--vr').split('/').map(Number); if (a > 0 && b > 0) return a / b } catch { } return 16 / 9 })();
     this.bind();
     this.ro = typeof ResizeObserver == 'function' ? new ResizeObserver(() => this.fit()) : null;
@@ -65,15 +65,25 @@ export class VPlayer {
   destroy() { clearInterval(this.iv); clearTimeout(this.ht); clearTimeout(this.rt); clearTimeout(this.ct); clearTimeout(this.qt); if (this.ro) this.ro.disconnect(); document.removeEventListener('keydown', this.esc); this.p = null }
 
   /* Dựng iframe cao hơn khung nhìn: video 16:9 vẫn nằm vừa khít giữa, phần dư trên/dưới (nền đen) bị .vb cắt đi.
-     Tiêu đề/avatar (bám mép trên iframe), logo và "Video khác" (bám mép dưới) vì thế bị đẩy ra ngoài vùng nhìn. */
+     Tiêu đề/avatar (bám mép trên iframe), logo và "Video khác" (bám mép dưới) vì thế bị đẩy ra ngoài vùng nhìn.
+     Khi BẬT phụ đề: phụ đề của YouTube bám mép DƯỚI iframe, nên không thể cắt phần dư phía dưới. Cách làm:
+       - iframe vẫn dư S phía trên (S ≥ chiều cao khối tiêu đề+avatar) → tiêu đề/avatar vẫn nằm ngoài khung nhìn;
+       - khung .vb được nới thêm đúng S phía dưới video → dải đen S đó chính là chỗ phụ đề hiện ra (không đè lên hình);
+       - lớp .vtm (nền đen) che phần trên video khi khung cao hơn khối video+dải (toàn màn hình), để tiêu đề không lọt vào vùng đen còn thấy. */
+  isFs() { const v = this.vb; return v.classList.contains('fs') || (document.fullscreenElement || document.webkitFullscreenElement) === v }
   fit() {
     const f = this.vb.querySelector('iframe'); if (!f) return;
+    const S = this.cc ? Math.round(Math.min(100, Math.max(72, this.vb.clientWidth * .19))) : 0;
+    /* Khung nhỏ (không toàn màn hình): chiều cao theo tỉ lệ khung = video + dải phụ đề. Toàn màn hình thì CSS tự đặt cỡ. */
+    if (!this.isFs()) { const ar = S && this.vb.clientWidth ? this.vb.clientWidth + '/' + Math.round(this.vb.clientWidth / this.ratio + S) : ''; if (this._ar !== ar) { this._ar = ar; this.vb.style.aspectRatio = ar } }
+    else if (this._ar) { this._ar = ''; this.vb.style.aspectRatio = '' }
     const W = this.vb.clientWidth, H = this.vb.clientHeight; if (!W || !H) return;
-    let vw = W, vh = W / this.ratio; if (vh > H) { vh = H; vw = H * this.ratio }
-    /* Phụ đề của YouTube nằm sát mép dưới player → khi đang bật phụ đề thì KHÔNG cắt phần dư (pad = 0), nếu không chữ bị cắt mất */
-    const pad = this.cc ? 0 : Math.round(Math.max(96, vh * .45)), k = [W, H, pad].join('x');
+    let vh = Math.min(W / this.ratio, H - S), vw = vh * this.ratio;
+    if (vh <= 0) return;
+    const y0 = (H - vh - S) / 2, pad = S || Math.round(Math.max(96, vh * .45)), k = [W, H, S].join('x');
     if (f._k === k) return; f._k = k;
-    f.style.cssText = `left:${(W - vw) / 2}px;top:${(H - vh) / 2 - pad}px;width:${vw}px;height:${vh + 2 * pad}px`;
+    f.style.cssText = `left:${(W - vw) / 2}px;top:${y0 - pad}px;width:${vw}px;height:${vh + 2 * pad}px`;
+    this.tm.style.height = S && y0 > .5 ? Math.ceil(y0) + 'px' : '0';
   }
 
   /* ---------- Sự kiện từ YouTube ---------- */
