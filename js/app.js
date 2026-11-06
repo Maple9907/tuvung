@@ -2,6 +2,8 @@
 import{W}from'./words.js';
 import{firebaseConfig}from'./firebase-config.js';
 import{fsrs,generatorParameters,createEmptyCard}from'./vendor/fsrs.mjs';
+import{parseTx,buildTimes,findIdx,fmtT}from'./sync.js';
+import{VPlayer}from'./vplayer.js';
 /* Thư viện ngoài tải động: lỗi mạng/CDN không còn làm kẹt cả app – phần học vẫn chạy */
 const tmo=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
 const FBU='https://www.gstatic.com/firebasejs/10.14.1/',P3=tmo(import('three'),8000),PF=tmo(Promise.all([import(FBU+'firebase-app.js'),import(FBU+'firebase-database.js'),import(FBU+'firebase-auth.js')]),8000);P3.catch(()=>{});PF.catch(()=>{});/* bắt đầu tải cả hai ngay, chờ song song */
@@ -25,7 +27,9 @@ const app=FBOK?initializeApp(firebaseConfig):null,db=FBOK?getDatabase(app):null,
 let usr=null,uid='',cs='Chưa đăng nhập – dữ liệu chỉ lưu trên máy',tm;
 const EM={'auth/invalid-credential':'Sai email hoặc mật khẩu','auth/email-already-in-use':'Email đã được đăng ký','auth/weak-password':'Mật khẩu tối thiểu 6 ký tự','auth/invalid-email':'Email không hợp lệ','auth/popup-closed-by-user':'Bạn đã đóng cửa sổ đăng nhập','auth/unauthorized-domain':'Domain chưa được thêm vào Authorized domains (xem README)','auth/network-request-failed':'Mất kết nối mạng','auth/admin-restricted-operation':'Chưa bật đăng nhập Ẩn danh (Anonymous) trong Firebase Console','auth/operation-not-allowed':'Phương thức đăng nhập này chưa được bật trong Firebase Console','auth/popup-blocked':'Trình duyệt chặn cửa sổ đăng nhập, hãy cho phép popup','auth/cancelled-popup-request':'Đã huỷ đăng nhập','auth/too-many-requests':'Thử quá nhiều lần, hãy đợi một lúc','auth/missing-password':'Chưa nhập mật khẩu','auth/missing-email':'Chưa nhập email','auth/user-disabled':'Tài khoản đã bị khoá','auth/credential-already-in-use':'Tài khoản này đã được liên kết với người khác','auth/provider-already-linked':'Tài khoản đã được liên kết rồi','auth/account-exists-with-different-credential':'Email này đã đăng ký bằng cách khác (email/mật khẩu). Hãy đăng nhập bằng email'};
 const err=e=>EM[e.code]||e.code||e.message;
-const refresh=()=>{if(tab=='me'||tab=='home')V[tab]()};
+/* khai báo sớm: usr()/refresh() có thể chạy ngay lúc khởi động (khi Firebase lỗi/ngoại tuyến) trước khi tới phần Views */
+let tab='home',Q=null,qi=0,fl=false,G=null,mt='set',dip=null;const V={};
+const refresh=()=>{if((tab=='me'||tab=='home')&&V[tab])V[tab]()};
 function merge(a,b){const n=a.upd>=b.upd?a:b,r=Object.assign(def(),n),ca=a.cards||{},cb=b.cards||{};r.cards={...cb,...ca};for(const k in cb)if(ca[k]&&(cb[k].ts||0)>(ca[k].ts||0))r.cards[k]=cb[k];
  r.xp=Math.max(a.xp||0,b.xp||0);r.best=Math.max(a.best||0,b.best||0);r.upd=Date.now();
  {const na=a.nc||0,nb=b.nc||0;r.nc=Math.max(na,nb);r.name=na!=nb?(na>nb?a.name:b.name):(/^Khách /.test(a.name||'')&&b.name?b.name:(r.name||a.name||b.name||''))}if(r.day!==day()){r.day=day();r.nn=0;r.rv=0}return r}
@@ -207,8 +211,7 @@ cv.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p||!gal.
  if(bg.visible){bg.rotation.y+=(px*.6-bg.rotation.y)*.03+.0008;bg.rotation.x+=(py*.4-bg.rotation.x)*.03;bg.scale.setScalar(1+pulse*.25);cr.rotation.x=t*(.3+S.streak*.03);cr.rotation.y=t*.4}
  if(gal.visible&&!ptrs.size)gal.rotation.y+=.0016;const on=S.fx||tab=='galaxy';cv.style.visibility=on?'visible':'hidden';if(on)R.render(sc,cam)})();
 /* ---------- Views ---------- */
-let tab='home',Q=null,qi=0,fl=false,G=null,mt='set',dip=null;const V={};
-const go=t=>{if(G)G.over=1;clearInterval(G?.tm);if(t=='learn'&&tab!='learn')Q=null;tab=t;document.body.classList.toggle('gal',t=='galaxy');bg.visible=t!='galaxy';gal.visible=t=='galaxy';cam.position.z=t=='galaxy'?zf:14;
+const go=t=>{vfsOff();if(G)G.over=1;clearInterval(G?.tm);if(t=='learn'&&tab!='learn')Q=null;if(t=='nghe')musOff();else if(tab=='nghe'&&S.music)musOn();tab=t;document.body.classList.toggle('gal',t=='galaxy');bg.visible=t!='galaxy';gal.visible=t=='galaxy';cam.position.z=t=='galaxy'?zf:14;
  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v==t));$('#main').scrollTop=0;if(t=='galaxy')paintGal();V[t]()};
 V.home=()=>{const ids=Object.keys(S.cards),mast=ids.filter(i=>S.cards[i].iv>=21).length,due=ids.filter(i=>S.cards[i].due<=Date.now()).length,nl=Math.max(0,S.nd-S.nn);
  const bars=L.map(l=>{const tot=W.filter(x=>x.c==l).length,k=ids.filter(i=>W[i].c==l).length;return`<div class="pr"><span>${l}</span><div class="bar"><i style="width:${k/tot*100}%;background:#${LC[l].toString(16).padStart(6,0)}"></i></div><span>${k}/${tot}</span></div>`}).join('');
@@ -294,10 +297,70 @@ addEventListener('appinstalled',()=>{dip=null;topUI();toast('Đã cài về máy
 function closeSheet(){const e=$('#sheet');if(e)e.remove()}
 function modal(html){closeSheet();const d=document.createElement('div');d.id='sheet';d.innerHTML='<div>'+html+'</div>';d.addEventListener('click',e=>{if(e.target===d)closeSheet()});document.body.appendChild(d)}
 let tt;function toast(m,ms){let e=$('#toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e)}e.textContent=m;e.hidden=false;clearTimeout(tt);tt=setTimeout(()=>e.hidden=true,ms||2500)}
+/* ---------- Tab Nghe: playlist YouTube (khung phát) + nội dung từng video (listen/t/NN.txt, NN = thứ tự video trong playlist) ---------- */
+/* 2 mục: q = Luyện nghe 5 phút (playlist 45 video, phụ đề listen/q/NN.txt) · d = Luyện nghe sâu (playlist 47 video, phụ đề listen/t/NN.txt).
+   ids = ID video theo từng file phụ đề (null = video chưa có phụ đề); dùng để đối chiếu nếu thứ tự playlist khác thứ tự file. */
+const NM={q:{pl:'PLnGTZv-nqOPqy42APYZywQIch__nFugFx',dir:'listen/q/',n:45,ik:'vvlq',ak:'vvaq',ids:['OlulrDOixEg','ga4JN44D1O8','TURHcAxt_JA','44TBU1Acq0s','hGbq9FAVE6g','NKXx_LHh4lY','JA3z5qc4E5U','ikwYSBoe_WI','L__-PbKjXwk','8bI8UjpT2zo','2F20CI8T6Lg','EEg4BfSf-H0','-KBP-Zliex0','4PtFfU3c7d0','jNDKNmKYc0Q','TpbQEYoks2U','leos8HySE7s',null,'II_n1hPUg3Y','uSNKxxeH1uM',null,'GBudukMsOyA','ZTQcb63xXGI',null,'1JenV_j7MU0','qWb7d_0TUTs','lMCkx__ppeQ','z2pypp5Pl80','2hPM_GEgP2o','w1Llgzg7KoM','oFxEmt0Y0Fk','WLqgLMISrUo','yrCrznjmjP8','Qa-pGWGRmNc','-0T7dONEBng','IS3Y9ZxJVLg','xCZpmB7hIEE','xLE633Q9oIU','-DJWZITYGFA','fRjHOABhNQE','asYalGkr_mQ','xErAdZ37GQo','RDjNpP3wVBk','DPGYsu6jHcs','b6nhVw3ozgY']},
+ d:{pl:'PLnGTZv-nqOPqRXxnfi-wEdpLPyWXdxVwX',dir:'listen/t/',n:47,ik:'vvl',ak:'vva',ids:null}};
+let NMD=localStorage.vvm=='d'?'d':'q',NP=null,NI=+localStorage[NM[NMD].ik]||0,NN=NM[NMD].n,NH=localStorage.vvlh=='1',YTL=null,NPLs=null,NCl=-1,NVP=null;/* NVP khung điều khiển video riêng (js/vplayer.js) · NMD chế độ đang nghe · NPLs danh sách ID thật của playlist · NCl số file phụ đề đang hiện */
+const nM=()=>NM[NMD];
+/* số file phụ đề ứng với video thứ i của playlist (đối chiếu theo ID khi biết, không thì theo thứ tự) */
+const nCi=i=>{const m=nM();if(m.ids&&NPLs&&NPLs[i]){const j=m.ids.indexOf(NPLs[i]);if(j>=0)return j}return i};
+let NL=[],NTm=[],NEs=[],NAn={},NCur=-1,ND=0,NF=localStorage.vvlf!='0',NCal=false,NPz=0,NTk=0;/* NL dòng nội dung · NTm giờ từng dòng · NAn mốc người dùng ghim · NF tự cuộn · NCal chế độ ghim mốc */
+const ytLoad=()=>YTL||(YTL=tmo(new Promise((ok,no)=>{if(window.YT&&YT.Player)return ok();window.onYouTubeIframeAPIReady=ok;const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';s.onerror=no;document.head.appendChild(s)}),8000).catch(e=>{YTL=null;throw e}));
+const lnHtml=l=>l.s.split(/([A-Za-z][A-Za-z'’-]*)/).map((x,i)=>i%2?`<span class="tw" data-a="lwd" data-v="${esc(x)}">${esc(x)}</span>`:esc(x)).join('');
+const txFmt=L=>L.map((l,i)=>`<div class="ln${l.k=='h'?' h':''}${l.b?' bk':''}" data-i="${i}"><button class="ts" data-a="lsk" data-v="${i}" aria-label="Tua tới câu này"></button><div class="lx">${l.k=='h'?`<h3>${esc(l.s)}</h3>`:lnHtml(l)}</div></div>`).join('');
+const akey=()=>nM().ak+NI;
+function aLoad(){NAn={};try{const o=JSON.parse(localStorage[akey()]||'null');if(o&&o.n==NL.length)NAn=o.a||{}}catch{}}
+function aSave(){try{if(Object.keys(NAn).length)localStorage[akey()]=JSON.stringify({n:NL.length,a:NAn});else localStorage.removeItem(akey())}catch{}}
+function nTimes(){const r=buildTimes(NL,ND,NAn);NTm=r.times;NEs=r.est;document.querySelectorAll('#tx .ln').forEach(e=>{const i=+e.dataset.i,b=e.firstChild;b.textContent=(NEs[i]?'~':'')+fmtT(NTm[i]);b.classList.toggle('pin',NAn[i]!=null)});nSt()}
+function nSt(){const e=$('#ls');if(!e)return;const k=Object.keys(NAn).length,real=NL.some(l=>l.t!=null);e.textContent=NCal?'📍 Đang ghim: nghe tới câu nào thì chạm giờ ở đầu câu đó':(real?'⏱ Có giờ chuẩn trong file':(k?'📍 '+k+' mốc đã ghim · còn lại là ước lượng (~)':'⏱ Giờ ước lượng (~). Chưa khớp? Bấm “📍 Ghim” để chỉnh.'))}
+function nMark(i,scroll){const tx=$('#tx');if(!tx)return;const o=tx.querySelector('.ln.on');if(o)o.classList.remove('on');NCur=i;const e=i>=0&&tx.querySelector('.ln[data-i="'+i+'"]');if(!e)return;e.classList.add('on');if(scroll&&NF&&!NH&&Date.now()>NPz){const v=$('.vid'),m=$('#main'),nv=$('nav');if(!v||!m)return;const top=v.getBoundingClientRect().bottom,bot=nv?nv.getBoundingClientRect().top:innerHeight,want=top+(bot-top)*.3;m.scrollTo({top:m.scrollTop+e.getBoundingClientRect().top-want,behavior:'smooth'})}}
+function nTick(){if(tab!='nghe'||!$('#tx')){clearInterval(NTk);NTk=0;return}if(!NP||!NP.getCurrentTime||!NTm.length)return;let t,d;try{t=NP.getCurrentTime();d=NP.getDuration()}catch{return}if(d>0&&Math.abs(d-ND)>1){ND=d;nTimes()}const i=findIdx(NTm,t);if(i!=NCur)nMark(i,true)}
+function lsk(v){const i=+v;if(!(i>=0&&i<NL.length))return;if(NCal){let t=0;try{t=NP.getCurrentTime()}catch{return}NAn[i]=Math.max(0,t-.8);aSave();nTimes();nMark(findIdx(NTm,t),false);toast('📍 Đã ghim câu này ở '+fmtT(t));return}
+ try{NP.seekTo(NTm[i],true);NP.playVideo()}catch{toast('Video chưa sẵn sàng');return}NPz=0;nMark(i,true)}
+function lcal(v,b){NCal=!NCal;b.classList.toggle('on',NCal);const tx=$('#tx');if(tx)tx.classList.toggle('cal',NCal);nSt()}
+function lfo(v,b){NF=!NF;try{localStorage.vvlf=NF?'1':'0'}catch{}b.textContent=NF?'🔄 Tự cuộn: Bật':'⏸ Tự cuộn: Tắt';if(NF)NPz=0}
+function lclr(){if(!Object.keys(NAn).length){toast('Chưa có mốc nào');return}NAn={};aSave();nTimes();toast('Đã xoá mốc ghim')}
+async function txLoad(){const el=$('#tx');if(!el)return;const i=NI,c=nCi(i),n=String(c+1).padStart(2,'0');NCl=c;el.dataset.i=i;el.innerHTML='<div class="m">⏳ Đang tải nội dung…</div>';NL=[];NTm=[];NCur=-1;ND=0;NAn={};
+ try{const r=await fetch(nM().dir+n+'.txt');if(!r.ok)throw 0;const t=await r.text();if(i!=NI||!$('#tx'))return;NL=parseTx(t);aLoad();el.innerHTML=txFmt(NL);try{ND=NP.getDuration()||0}catch{}nTimes();if(!NTk)NTk=setInterval(nTick,250)}
+ catch{if(i==NI&&$('#tx'))$('#tx').innerHTML='<div class="m">Video này chưa có phụ đề'+(NMD=='q'?'.':' (thêm file <b>'+nM().dir+n+'.txt</b>).')+'</div>'}}
+/* Tên hiển thị ngắn gọn (thay tiêu đề YouTube): video 6–9 là loại Nghe + Đọc, còn lại là Nghe. X = số thứ tự video (X/47) */
+const NRD=[6,7,8,9],nTitle=i=>NMD=='q'?'Luyện Nghe 5 Phút Bài '+(i+1):(NRD.includes(i+1)?'Luyện Nghe Và Đọc Bài ':'Luyện Nghe Bài ')+(i+1);
+function nUI(){const c=$('#lc'),t=$('#lt');if(c)c.textContent='Video '+(NI+1)+'/'+NN;if(t)t.textContent=nTitle(NI)}
+function nSet(i){if(!(i>=0&&i<NN)||i==NI)return;NI=i;try{localStorage[nM().ik]=i}catch{}nUI();txLoad();const m=$('#main');if(m)m.scrollTop=0}
+/* Phóng to video: dùng Fullscreen API nếu trình duyệt cho phép (Android/iPad), nếu không (iPhone) thì phóng to bằng CSS, tự xoay ngang khi máy đang dọc */
+const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||null,
+ IFS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+ IFX='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+const vfsOn=()=>{const v=$('.vb');return!!v&&(fsEl()===v||v.classList.contains('fs'))};
+function vfsUI(){const b=$('.vfs');if(!b)return;const on=vfsOn();b.innerHTML=on?IFX:IFS;b.setAttribute('aria-label',on?'Thu nhỏ video':'Phóng to video')}
+function vfsOff(){const v=$('.vb');if(fsEl()){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch{}}
+ document.body.classList.remove('vfs');if(v)v.classList.remove('fs');try{screen.orientation.unlock()}catch{}vfsUI()}
+function vfs(){const v=$('.vb');if(!v)return;if(vfsOn())return vfsOff();
+ const pseudo=()=>{v.classList.add('fs');document.body.classList.add('vfs');vfsUI()},rq=v.requestFullscreen||v.webkitRequestFullscreen;
+ if(!rq)return pseudo();
+ try{const p=rq.call(v);if(p&&p.then)p.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch{}}).catch(pseudo)}catch{pseudo()}}
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{if(!fsEl())try{screen.orientation.unlock()}catch{}vfsUI()}));
+addEventListener('keydown',e=>{if(e.key=='Escape'&&vfsOn())vfsOff()});
+V.nghe=()=>{vfsOff();NVP&&NVP.destroy();NVP=null;try{NP&&NP.destroy()}catch{}NP=null;NPLs=null;NCl=-1;NCal=false;
+ h(`<div class="vid"><div class="vb" id="vb"><div id="yt"></div><div class="ye m" id="ye">⏳ Đang tải video…</div></div></div>
+<div class="card"><div class="seg"><button data-a="lmode" data-v="q"${NMD=='q'?' class="on"':''}>⏱ Nghe 5 phút</button><button data-a="lmode" data-v="d"${NMD=='d'?' class="on"':''}>🎧 Nghe sâu</button></div><div class="lh"><button class="x" data-a="lpv" aria-label="Video trước">‹</button><div class="ct" style="flex:1;min-width:0"><b id="lc"></b><div class="m lt" id="lt"></div></div><button class="x" data-a="lnx" aria-label="Video sau">›</button></div></div>
+<div class="card"><div class="lh"><b>📖 Nội dung</b><button class="hb" data-a="lsh">${NH?'👁 Hiện':'🙈 Ẩn'}</button></div>
+<div class="lbar"><button class="hb" data-a="lfo">${NF?'🔄 Tự cuộn: Bật':'⏸ Tự cuộn: Tắt'}</button><button class="hb${NCal?' on':''}" data-a="lcal">📍 Ghim</button><button class="hb" data-a="lclr">↺ Xoá mốc</button></div><div class="m ls" id="ls"></div>
+<div id="tx" class="tx${NCal?' cal':''}"${NH?' hidden':''}></div></div>`);
+ NVP=new VPlayer($('#vb'),{toast});vfsUI();nUI();txLoad();
+ ytLoad().then(()=>{if(tab!='nghe'||!$('#yt'))return;
+  NP=new YT.Player('yt',{host:'https://www.youtube-nocookie.com',width:'100%',height:'100%',playerVars:{listType:'playlist',list:nM().pl,index:NI,playsinline:1,rel:0,modestbranding:1,fs:0,controls:0,disablekb:1,iv_load_policy:3,cc_load_policy:0,...(location.protocol.startsWith('http')?{origin:location.origin}:{})},
+   events:{onReady:e=>{NVP&&NVP.attach(e.target);const n=e.target.getPlaylist&&e.target.getPlaylist();if(n&&n.length){NN=n.length;NPLs=n;if(nCi(NI)!=NCl)txLoad()}const y=$('#ye');if(y)y.hidden=true;nUI()},
+    onStateChange:e=>{NVP&&NVP.state(e.data);try{const i=NP.getPlaylistIndex();if(i>=0&&i!=NI)nSet(i);else nUI()}catch{}},onError:e=>NVP&&NVP.error(e.data),onApiChange:()=>NVP&&NVP.api()}})
+ }).catch(()=>{const y=$('#ye');if(y)y.textContent='📡 Cần có mạng để xem video. Nội dung bên dưới vẫn đọc được.'})};
+['touchstart','wheel'].forEach(ev=>$('#main').addEventListener(ev,()=>{NPz=Date.now()+6000},{passive:true}));/* người dùng tự cuộn thì tạm ngưng tự cuộn 6 giây */
 /* ---------- Actions ---------- */
-const A={go,ls(){LS[Q[qi]].seen=1;V.learn()},ln(){qi++;V.learn()},lp(v){lfin(+v===EX.i)},lc(){lfin(matchW($('#ti').value,W[EX.i].w))},li(){lfin(false)},say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
+function lmode(v){if(v!='q'&&v!='d'||v==NMD)return;NMD=v;try{localStorage.vvm=v}catch{}NI=+localStorage[nM().ik]||0;NN=nM().n;if(NI>=NN)NI=0;V.nghe();const m=$('#main');if(m)m.scrollTop=0}
+const A={go,vfs,lmode,lpv(){nSet(NI-1);try{NP.previousVideo()}catch{}},lnx(){nSet(NI+1);try{NP.nextVideo()}catch{}},lwd:w=>speak(w),lsk,lcal,lfo,lclr,lsh(v,t){NH=!NH;try{localStorage.vvlh=NH?'1':'0'}catch{}$('#tx').hidden=NH;t.textContent=NH?'👁 Hiện':'🙈 Ẩn'},ls(){LS[Q[qi]].seen=1;V.learn()},ln(){qi++;V.learn()},lp(v){lfin(+v===EX.i)},lc(){lfin(matchW($('#ti').value,W[EX.i].w))},li(){lfin(false)},say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
  mt(v){mt=v;V.me()},closeSheet,
- music(){S.music=!S.music;save();S.music?musOn():musOff();topUI();if(tab=='me')V.me()},
+ music(){S.music=!S.music;save();S.music&&tab!='nghe'?musOn():musOff();topUI();if(tab=='me')V.me()},
  async install(){if(dip){const p=dip;dip=null;p.prompt();try{await p.userChoice}catch{}topUI();return}
   modal(`<h3>Cài về máy</h3>${ios?'<ol><li>Mở trang này bằng <b>Safari</b></li><li>Bấm nút <b>Chia sẻ</b> (hình vuông có mũi tên hướng lên) ở thanh dưới</li><li>Chọn <b>Thêm vào MH chính</b></li></ol>':'<ol><li>Bấm menu <b>⋮</b> của trình duyệt (Chrome / Edge)</li><li>Chọn <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b></li></ol><div class="m">Nếu không thấy mục này, hãy mở trang bằng Chrome và đảm bảo địa chỉ bắt đầu bằng https://</div>'}<button class="btn" data-a="closeSheet">Đã hiểu</button>`)},
  flip(){fl=!fl;sfx('flip');$('.fc').classList.toggle('f',fl);$('#gr').classList.remove('hide')},

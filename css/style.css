@@ -109,3 +109,73 @@ mark{background:none;color:var(--y);font-weight:700}
 .lb .xpv{margin-left:auto;padding-left:6px;font-variant-numeric:tabular-nums}
 .lb.me{color:var(--y)}
 h2{overflow-wrap:anywhere}
+
+/* Tab Nghe: video dính ở trên, nội dung cuộn bên dưới. Video dọc 9:16 thì đổi --vr thành 9/16 */
+.vid{position:sticky;top:-12px;z-index:3;background:var(--bg);margin:-12px -14px 0;padding:12px 14px 8px;--vr:16/9}/* phủ cả phần đệm 12px của #main để chữ không lộ phía trên video */
+.vb{position:relative;width:100%;aspect-ratio:var(--vr);max-height:44vh;margin:0 auto;background:#000;border-radius:14px;overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+/* Khung video sạch (js/vplayer.js): iframe YouTube không nhận chạm và được dựng cao hơn khung (js đặt left/top/width/height) để tiêu đề, avatar, logo, "Video khác" của YouTube bị .vb cắt mất. Mọi điều khiển là của app. */
+.vb iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0;pointer-events:none;opacity:0}
+.vb.rd iframe{opacity:1}
+.vb.raw iframe{pointer-events:auto}/* dự phòng iPhone: mở khoá để chạm nút phát của YouTube */
+.vb:not(.rd) .vs,.vb:not(.rd) .vc{display:none}
+.vs{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.vb.raw .vs{display:none}
+.vb.en .vs{background:#0b1020}/* hết video: che màn hình gợi ý video của YouTube */
+.vpl{width:64px;height:64px;border-radius:50%;background:rgba(11,16,32,.62);border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;pointer-events:none}
+.vpl svg{width:32px;height:32px}
+.vb.rd:not(.pl) .vpl{opacity:1}
+.vb.err .vpl{display:none}
+.vsp{display:none;position:absolute;inset:0;margin:auto;width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;animation:vspin .8s linear infinite;pointer-events:none}
+.vb.bf .vsp{display:block}
+@keyframes vspin{to{transform:rotate(360deg)}}
+.vc{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:20px max(8px,env(safe-area-inset-right,0px)) 2px max(8px,env(safe-area-inset-left,0px));background:linear-gradient(transparent,rgba(0,0,0,.8));color:#fff;opacity:0;pointer-events:none;transition:opacity .2s}
+.vb.ui .vc{opacity:1;pointer-events:auto}
+.vb.mo .vc{display:none}
+.vsk{position:relative;height:26px;margin:0 6px;cursor:pointer;touch-action:none;outline-offset:-2px}
+.vsk::before{content:"";position:absolute;left:0;right:0;top:50%;height:4px;margin-top:-2px;border-radius:2px;background:rgba(255,255,255,.26)}
+.vsk i{position:absolute;left:0;top:50%;height:4px;margin-top:-2px;border-radius:2px;width:0}
+.vsk .bf{background:rgba(255,255,255,.34)}.vsk .pf{background:var(--p)}
+.vsk .th{width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(124,156,255,.38)}
+.vr{display:flex;align-items:center;height:42px}
+.vr .gr{flex:1}
+.vt{margin-left:4px;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.vbn{position:relative;flex:none;width:42px;height:42px;padding:0;border:0;border-radius:50%;background:none;color:#fff;display:flex;align-items:center;justify-content:center}
+.vbn svg{width:24px;height:24px;pointer-events:none}
+.vbn:active{background:rgba(255,255,255,.2)}
+.vbn.cc.on{color:var(--p)}
+.vbn.cc.on::after{content:"";position:absolute;left:10px;right:10px;bottom:7px;height:2px;border-radius:1px;background:var(--p)}
+.vfs svg{width:22px;height:22px}
+/* Bảng cài đặt: phủ kín khung video (nằm trong .vb nên vẫn thấy khi phóng to) */
+.vm{position:absolute;inset:0;z-index:5;overflow-y:auto;overscroll-behavior:contain;padding:0 12px 12px;background:rgba(8,12,28,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--t)}
+.mh{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;margin:0 -12px 4px;padding:2px 6px 0 12px;background:#080c1c;font-size:14px}
+.mb{height:40px;padding:0;border:0;background:none;color:var(--t);font-size:14px;font-weight:700}
+.mrow{display:flex;width:100%;height:34px;align-items:center;justify-content:space-between;gap:10px;padding:0 2px;border:0;border-bottom:1px solid rgba(255,255,255,.08);background:none;color:var(--t);font-size:14px;text-align:left}
+.mrow span:last-child{color:var(--m);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi{max-width:560px;margin:0 auto}
+.mc{display:flex;flex-wrap:wrap;gap:6px}
+.mchip{height:32px;max-width:100%;padding:0 12px;border-radius:16px;border:1px solid var(--b);background:rgba(255,255,255,.08);color:var(--t);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mchip.on{background:var(--p);border-color:var(--p);color:#0b1020}
+.mn{margin-top:5px;font-size:12.5px;color:var(--m)}
+.ye{position:absolute;inset:0;z-index:7;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center}
+.lt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx{font-size:17px;line-height:1.6}.tx h3{margin:0}
+.ln{display:flex;gap:8px;align-items:flex-start;padding:3px 6px;margin:0 -6px;border-radius:10px;transition:background .25s}
+.ln.bk{margin-top:12px}.ln.h{margin-top:12px;margin-bottom:2px}
+.lx{flex:1;min-width:0}
+.ln .ts{flex:none;width:46px;margin-top:5px;padding:2px 0;border:0;border-radius:7px;background:none;color:var(--m);font-size:11.5px;font-variant-numeric:tabular-nums;text-align:left;line-height:1.4}
+.ln .ts.pin{color:var(--g);font-weight:700}
+.ln.on{background:rgba(124,156,255,.2);box-shadow:inset 3px 0 0 var(--p)}
+.ln.on .ts{color:var(--t)}
+.tx.cal .ts{color:var(--y);border:1px dashed var(--y);text-align:center;width:50px;padding:2px 0}
+.lbar{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}.ls{font-size:12.5px;margin:0 0 8px}
+.hb.on{background:rgba(124,156,255,.35);border-color:var(--p)}
+.tw{border-radius:4px}.tw:active{background:rgba(124,156,255,.35)}
+
+/* Phóng to video: Fullscreen API (Android/iPad) hoặc, nếu không có (iPhone), phủ kín màn hình bằng CSS và xoay ngang khi máy đang dọc */
+.vb:fullscreen{width:100%;height:100%;max-height:none;aspect-ratio:auto;border-radius:0;margin:0}
+.vb:-webkit-full-screen{width:100%;height:100%;max-height:none;aspect-ratio:auto;border-radius:0;margin:0}
+.vb:fullscreen .vc,.vb.fs .vc{padding-bottom:max(2px,env(safe-area-inset-bottom,0px))}
+body.vfs nav,body.vfs #top{display:none}
+body.vfs #app{z-index:30;top:0;bottom:0}
+.vb.fs{position:fixed;left:0;top:0;width:100vw;height:100vh;height:100dvh;max-height:none;aspect-ratio:auto;border-radius:0;margin:0;z-index:40}
+@media (orientation:portrait){.vb.fs{width:100vh;width:100dvh;height:100vw;transform-origin:0 0;transform:translateX(100vw) rotate(90deg)}}
