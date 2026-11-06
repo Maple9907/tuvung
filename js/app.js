@@ -211,7 +211,7 @@ cv.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p||!gal.
  if(bg.visible){bg.rotation.y+=(px*.6-bg.rotation.y)*.03+.0008;bg.rotation.x+=(py*.4-bg.rotation.x)*.03;bg.scale.setScalar(1+pulse*.25);cr.rotation.x=t*(.3+S.streak*.03);cr.rotation.y=t*.4}
  if(gal.visible&&!ptrs.size)gal.rotation.y+=.0016;const on=S.fx||tab=='galaxy';cv.style.visibility=on?'visible':'hidden';if(on)R.render(sc,cam)})();
 /* ---------- Views ---------- */
-const go=t=>{vfsOff();if(tab=='nghe'&&t!='nghe')nMediaOff();if(G)G.over=1;clearInterval(G?.tm);if(t=='learn'&&tab!='learn')Q=null;if(t=='nghe')musOff();else if(tab=='nghe'&&S.music)musOn();tab=t;document.body.classList.toggle('gal',t=='galaxy');bg.visible=t!='galaxy';gal.visible=t=='galaxy';cam.position.z=t=='galaxy'?zf:14;
+const go=t=>{vfsOff();if(tab=='nghe'&&t!='nghe')msStop();if(G)G.over=1;clearInterval(G?.tm);if(t=='learn'&&tab!='learn')Q=null;if(t=='nghe')musOff();else if(tab=='nghe'&&S.music)musOn();tab=t;document.body.classList.toggle('gal',t=='galaxy');bg.visible=t!='galaxy';gal.visible=t=='galaxy';cam.position.z=t=='galaxy'?zf:14;
  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v==t));$('#main').scrollTop=0;if(t=='galaxy')paintGal();V[t]()};
 V.home=()=>{const ids=Object.keys(S.cards),mast=ids.filter(i=>S.cards[i].iv>=21).length,due=ids.filter(i=>S.cards[i].due<=Date.now()).length,nl=Math.max(0,S.nd-S.nn);
  const bars=L.map(l=>{const tot=W.filter(x=>x.c==l).length,k=ids.filter(i=>W[i].c==l).length;return`<div class="pr"><span>${l}</span><div class="bar"><i style="width:${k/tot*100}%;background:#${LC[l].toString(16).padStart(6,0)}"></i></div><span>${k}/${tot}</span></div>`}).join('');
@@ -314,29 +314,15 @@ const txFmt=L=>L.map((l,i)=>`<div class="ln${l.k=='h'?' h':''}${l.b?' bk':''}" d
 function nTimes(){const r=buildTimes(NL,ND,NAn);NTm=r.times;NEs=r.est;document.querySelectorAll('#tx .ln').forEach(e=>{const i=+e.dataset.i,b=e.firstChild;b.textContent=(NEs[i]?'~':'')+fmtT(NTm[i])});nSt()}
 function nSt(){const e=$('#ls');if(!e)return;e.textContent=NL.some(l=>l.t!=null)?'⏱ Có giờ chuẩn trong file':'⏱ Giờ ước lượng (~), có thể lệch vài giây'}
 function nMark(i,scroll){const tx=$('#tx');if(!tx)return;const o=tx.querySelector('.ln.on');if(o)o.classList.remove('on');NCur=i;const e=i>=0&&tx.querySelector('.ln[data-i="'+i+'"]');if(!e)return;e.classList.add('on');if(scroll&&NF&&!NH&&Date.now()>NPz){const v=$('.vid'),m=$('#main'),nv=$('nav');if(!v||!m)return;const top=v.getBoundingClientRect().bottom,bot=nv?nv.getBoundingClientRect().top:innerHeight,want=top+(bot-top)*.3;m.scrollTo({top:m.scrollTop+e.getBoundingClientRect().top-want,behavior:'smooth'})}}
-function nTick(){if(tab!='nghe'||!$('#tx')){clearInterval(NTk);NTk=0;return}if(!NP||!NP.getCurrentTime||!NTm.length)return;let t,d;try{t=NP.getCurrentTime();d=NP.getDuration()}catch{return}if(d>0&&Math.abs(d-ND)>1){ND=d;nTimes()}const i=findIdx(NTm,t);if(i!=NCur)nMark(i,true)}
-function lsk(v){const i=+v;if(!(i>=0&&i<NL.length))return;try{NP.seekTo(NTm[i],true);NP.playVideo()}catch{toast('Video chưa sẵn sàng');return}NPz=0;nMark(i,true)}
+function nTick(){if(tab!='nghe'||!$('#tx')){clearInterval(NTk);NTk=0;msStop();return}msPos();if(document.hidden)return;if(!NP||!NP.getCurrentTime||!NTm.length)return;let t,d;try{t=NP.getCurrentTime();d=NP.getDuration()}catch{return}if(d>0&&Math.abs(d-ND)>1){ND=d;nTimes()}const i=findIdx(NTm,t);if(i!=NCur)nMark(i,true)}
+function lsk(v){const i=+v;if(!(i>=0&&i<NL.length))return;try{NP.seekTo(NTm[i],true);NP.playVideo()}catch{toast('Video chưa sẵn sàng');return}userPaused=false;NPz=0;nMark(i,true)}
 function lfo(v,b){NF=!NF;try{localStorage.vvlf=NF?'1':'0'}catch{}b.textContent=NF?'🔄 Tự cuộn: Bật':'⏸ Tự cuộn: Tắt';if(NF)NPz=0}
 async function txLoad(){const el=$('#tx');if(!el)return;const i=NI,c=nCi(i),n=String(c+1).padStart(2,'0');NCl=c;el.dataset.i=i;el.innerHTML='<div class="m">⏳ Đang tải nội dung…</div>';NL=[];NTm=[];NCur=-1;ND=0;NAn={};
  try{const r=await fetch(nM().dir+n+'.txt');if(!r.ok)throw 0;const t=await r.text();if(i!=NI||!$('#tx'))return;NL=parseTx(t);el.innerHTML=txFmt(NL);try{ND=NP.getDuration()||0}catch{}nTimes();if(!NTk)NTk=setInterval(nTick,250)}
  catch{if(i==NI&&$('#tx'))$('#tx').innerHTML='<div class="m">Video này chưa có phụ đề'+(NMD=='q'?'.':' (thêm file <b>'+nM().dir+n+'.txt</b>).')+'</div>'}}
 /* Tên hiển thị ngắn gọn (thay tiêu đề YouTube): video 6–9 là loại Nghe + Đọc, còn lại là Nghe. X = số thứ tự video (X/47) */
 const NRD=[6,7,8,9],nTitle=i=>NMD=='q'?'Luyện Nghe 5 Phút Bài '+(i+1):(NRD.includes(i+1)?'Luyện Nghe Và Đọc Bài ':'Luyện Nghe Bài ')+(i+1);
-function nUI(){const c=$('#lc'),t=$('#lt');if(c)c.textContent='Video '+(NI+1)+'/'+NN;if(t)t.textContent=nTitle(NI);nMedia()}
-/* Thanh thông báo / màn hình khoá (Media Session): hiện tên đã sửa trong app (nTitle) thay vì tiêu đề YouTube.
-   Nút ⏮ ⏭ ⏯ trên thông báo điều khiển đúng video đang nghe. Rời tab Nghe thì gỡ hết (nMediaOff). */
-const nMS='mediaSession'in navigator?navigator.mediaSession:null,
- nArt=()=>['192','512'].map(z=>({src:new URL('icons/icon-'+z+'.png',location.href).href,sizes:z+'x'+z,type:'image/png'}));
-function nMedia(){if(!nMS||tab!='nghe'||typeof MediaMetadata!='function')return;
- try{const t=nTitle(NI),al=NMD=='q'?'Nghe 5 phút':'Nghe sâu',m=nMS.metadata;
-  if(!m||m.title!=t||m.album!=al)nMS.metadata=new MediaMetadata({title:t,artist:'Học Từ Vựng',album:al,artwork:nArt()});
-  const on=(a,f)=>{try{nMS.setActionHandler(a,f)}catch{}};
-  on('play',()=>{try{NP.playVideo()}catch{}});on('pause',()=>{try{NP.pauseVideo()}catch{}});
-  on('previoustrack',NI>0?()=>A.lpv():null);on('nexttrack',NI<NN-1?()=>A.lnx():null);
-  on('seekbackward',d=>{try{NP.seekTo(Math.max(0,NP.getCurrentTime()-((d&&d.seekOffset)||10)),true)}catch{}});
-  on('seekforward',d=>{try{NP.seekTo(NP.getCurrentTime()+((d&&d.seekOffset)||10),true)}catch{}});
-  on('seekto',d=>{try{if(d&&d.seekTime!=null)NP.seekTo(d.seekTime,true)}catch{}})}catch{}}
-function nMediaOff(){if(!nMS)return;try{nMS.metadata=null;['play','pause','previoustrack','nexttrack','seekbackward','seekforward','seekto'].forEach(a=>{try{nMS.setActionHandler(a,null)}catch{}})}catch{}}
+function nUI(){const c=$('#lc'),t=$('#lt');if(c)c.textContent='Video '+(NI+1)+'/'+NN;if(t)t.textContent=nTitle(NI);msMeta()}
 function nSet(i){if(!(i>=0&&i<NN)||i==NI)return;NI=i;try{localStorage[nM().ik]=i}catch{}nUI();txLoad();const m=$('#main');if(m)m.scrollTop=0}
 /* Phóng to video: dùng Fullscreen API nếu trình duyệt cho phép (Android/iPad), nếu không (iPhone) thì phóng to bằng CSS, tự xoay ngang khi máy đang dọc */
 const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||null,
@@ -352,22 +338,62 @@ function vfs(){const v=$('.vb');if(!v)return;if(vfsOn())return vfsOff();
  try{const p=rq.call(v);if(p&&p.then)p.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch{}}).catch(pseudo)}catch{pseudo()}}
 ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{if(!fsEl())try{screen.orientation.unlock()}catch{}vfsUI()}));
 addEventListener('keydown',e=>{if(e.key=='Escape'&&vfsOn())vfsOff()});
-V.nghe=()=>{vfsOff();NVP&&NVP.destroy();NVP=null;try{NP&&NP.destroy()}catch{}NP=null;NPLs=null;NCl=-1;
+/* ---------- Nghe nền + thông báo điều khiển (Media Session) ----------
+   Chrome chỉ gắn thông báo với media của TRANG CHÍNH (video nằm trong iframe YouTube nên thông báo luôn lấy tiêu đề YouTube),
+   vì vậy dùng một <audio> im lặng (tạo bằng JS) phát song song với video. Nhờ đó tiêu đề thông báo = nTitle(NI) (tiêu đề của app).
+   Chỉ hoạt động trên Android (iOS dừng media của PWA khi khoá màn hình). */
+let userPaused=false,MSA=null,msPT=0;/* userPaused: người dùng TỰ dừng (khác với YouTube tự dừng khi ẩn trang) */
+const silentWav=()=>{const sr=8000,n=sr*10,b=new Uint8Array(44+n),d=new DataView(b.buffer),w=(o,s)=>[...s].forEach((c,i)=>b[o+i]=c.charCodeAt(0));
+ w(0,'RIFF');d.setUint32(4,36+n,true);w(8,'WAVEfmt ');d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,1,true);d.setUint32(24,sr,true);d.setUint32(28,sr,true);d.setUint16(32,1,true);d.setUint16(34,8,true);w(36,'data');d.setUint32(40,n,true);b.fill(128,44);
+ return URL.createObjectURL(new Blob([b],{type:'audio/wav'}))};
+function msMeta(){if(!('mediaSession'in navigator)||typeof MediaMetadata!='function'||tab!='nghe')return;
+ try{navigator.mediaSession.metadata=new MediaMetadata({title:nTitle(NI),artist:'Học Từ Vựng',album:NMD=='q'?'Nghe 5 phút':'Nghe sâu',
+  artwork:[{src:'icons/icon-512.png',sizes:'512x512',type:'image/png'},{src:'icons/icon-192.png',sizes:'192x192',type:'image/png'}]})}catch{}}
+function msState(s){/* s = e.data của onStateChange */
+ if(!('mediaSession'in navigator))return;
+ if(!MSA){MSA=new Audio(silentWav());MSA.loop=true}
+ if(s==1||s==3){MSA.play().catch(()=>{});navigator.mediaSession.playbackState='playing';msMeta()}
+ else if(s==2&&document.hidden&&!userPaused){/* YouTube tự pause lúc ẩn trang: GIỮ audio im lặng để trang không bị đóng băng, rồi bật lại video */
+  MSA.play().catch(()=>{});[0,400,1200,3000].forEach(ms=>setTimeout(()=>{try{if(document.hidden&&!userPaused&&NP&&NP.getPlayerState()==2)NP.playVideo()}catch{}},ms))}
+ else if(s==0||s==2||s==5){MSA.pause();navigator.mediaSession.playbackState='paused'}}
+function msPos(){/* mỗi ~1 giây: cập nhật thanh tiến trình trên thông báo */
+ if(!('mediaSession'in navigator)||!NP||!NP.getCurrentTime||Date.now()-msPT<1000)return;msPT=Date.now();
+ try{const d=NP.getDuration(),t=NP.getCurrentTime();if(d>0)navigator.mediaSession.setPositionState({duration:d,position:Math.min(Math.max(0,t),d),playbackRate:NVP?NVP.rate:1})}catch{}}
+function msStop(){/* rời tab Nghe / dựng lại player: tắt audio im lặng và thông báo */
+ userPaused=false;try{MSA&&MSA.pause()}catch{}
+ if('mediaSession'in navigator){try{navigator.mediaSession.playbackState='none';navigator.mediaSession.metadata=null}catch{}}}
+function msInit(){const m=navigator.mediaSession;if(!m)return;
+ const on=(k,f)=>{try{m.setActionHandler(k,f)}catch{}};
+ on('play',()=>{userPaused=false;try{NP&&NP.playVideo()}catch{}});
+ on('pause',()=>{userPaused=true;try{NP&&NP.pauseVideo()}catch{}});
+ on('previoustrack',()=>A.lpv());on('nexttrack',()=>A.lnx());
+ on('seekbackward',()=>{try{NP&&NP.seekTo(Math.max(0,NP.getCurrentTime()-10),true)}catch{}});
+ on('seekforward',()=>{try{NP&&NP.seekTo(NP.getCurrentTime()+10,true)}catch{}});
+ on('seekto',e=>{try{NP&&NP.seekTo(e.seekTime,true)}catch{}})}
+msInit();
+/* Ẩn trang (khoá màn hình / sang app khác): YouTube có thể tự pause → bật lại nếu người dùng không tự dừng */
+document.addEventListener('visibilitychange',()=>{
+ if(!NP||tab!='nghe')return;
+ if(document.hidden){
+  if(MSA&&!userPaused)MSA.play().catch(()=>{});
+  [300,1000,2000,4000,8000].forEach(ms=>setTimeout(()=>{try{if(document.hidden&&!userPaused&&NP&&NP.getPlayerState()==2)NP.playVideo()}catch{}},ms));
+ }});
+V.nghe=()=>{vfsOff();NVP&&NVP.destroy();NVP=null;try{NP&&NP.destroy()}catch{}NP=null;NPLs=null;NCl=-1;msStop();
  h(`<div class="vid"><div class="vb" id="vb"><div id="yt"></div><div class="ye m" id="ye">⏳ Đang tải video…</div></div></div>
 <div class="card"><div class="seg"><button data-a="lmode" data-v="q"${NMD=='q'?' class="on"':''}>⏱ Nghe 5 phút</button><button data-a="lmode" data-v="d"${NMD=='d'?' class="on"':''}>🎧 Nghe sâu</button></div><div class="lh"><button class="x" data-a="lpv" aria-label="Video trước">‹</button><div class="ct" style="flex:1;min-width:0"><b id="lc"></b><div class="m lt" id="lt"></div></div><button class="x" data-a="lnx" aria-label="Video sau">›</button></div></div>
 <div class="card"><div class="lh"><b>📖 Nội dung</b><button class="hb" data-a="lsh">${NH?'👁 Hiện':'🙈 Ẩn'}</button></div>
 <div class="lbar"><button class="hb" data-a="lfo">${NF?'🔄 Tự cuộn: Bật':'⏸ Tự cuộn: Tắt'}</button></div><div class="m ls" id="ls"></div>
 <div id="tx" class="tx"${NH?' hidden':''}></div></div>`);
- NVP=new VPlayer($('#vb'),{toast});vfsUI();nUI();txLoad();
+ NVP=new VPlayer($('#vb'),{toast,onUser:p=>{userPaused=p}});vfsUI();nUI();txLoad();
  ytLoad().then(()=>{if(tab!='nghe'||!$('#yt'))return;
   NP=new YT.Player('yt',{host:'https://www.youtube-nocookie.com',width:'100%',height:'100%',playerVars:{listType:'playlist',list:nM().pl,index:NI,playsinline:1,rel:0,modestbranding:1,fs:0,controls:0,disablekb:1,iv_load_policy:3,...VPlayer.vars(),...(location.protocol.startsWith('http')?{origin:location.origin}:{})},
-   events:{onReady:e=>{NVP&&NVP.attach(e.target);const n=e.target.getPlaylist&&e.target.getPlaylist();if(n&&n.length){NN=n.length;NPLs=n;if(nCi(NI)!=NCl)txLoad()}const y=$('#ye');if(y)y.hidden=true;nUI()},
-    onStateChange:e=>{NVP&&NVP.state(e.data);try{const i=NP.getPlaylistIndex();if(i>=0&&i!=NI)nSet(i);else nUI()}catch{}},onError:e=>NVP&&NVP.error(e.data),onApiChange:()=>NVP&&NVP.api()}})
+   events:{onReady:e=>{NVP&&NVP.attach(e.target);const n=e.target.getPlaylist&&e.target.getPlaylist();if(n&&n.length){NN=n.length;NPLs=n;if(nCi(NI)!=NCl)txLoad()}if(!NTk)NTk=setInterval(nTick,250);const y=$('#ye');if(y)y.hidden=true;nUI()},
+    onStateChange:e=>{NVP&&NVP.state(e.data);msState(e.data);try{const i=NP.getPlaylistIndex();if(i>=0&&i!=NI)nSet(i);else nUI()}catch{}},onError:e=>NVP&&NVP.error(e.data),onApiChange:()=>NVP&&NVP.api()}})
  }).catch(()=>{const y=$('#ye');if(y)y.textContent='📡 Cần có mạng để xem video. Nội dung bên dưới vẫn đọc được.'})};
 ['touchstart','wheel'].forEach(ev=>$('#main').addEventListener(ev,()=>{NPz=Date.now()+6000},{passive:true}));/* người dùng tự cuộn thì tạm ngưng tự cuộn 6 giây */
 /* ---------- Actions ---------- */
 function lmode(v){if(v!='q'&&v!='d'||v==NMD)return;NMD=v;try{localStorage.vvm=v}catch{}NI=+localStorage[nM().ik]||0;NN=nM().n;if(NI>=NN)NI=0;V.nghe();const m=$('#main');if(m)m.scrollTop=0}
-const A={go,vfs,lmode,lpv(){nSet(NI-1);try{NP.previousVideo()}catch{}},lnx(){nSet(NI+1);try{NP.nextVideo()}catch{}},lwd:w=>speak(w),lsk,lfo,lsh(v,t){NH=!NH;try{localStorage.vvlh=NH?'1':'0'}catch{}$('#tx').hidden=NH;t.textContent=NH?'👁 Hiện':'🙈 Ẩn'},ls(){LS[Q[qi]].seen=1;V.learn()},ln(){qi++;V.learn()},lp(v){lfin(+v===EX.i)},lc(){lfin(matchW($('#ti').value,W[EX.i].w))},li(){lfin(false)},say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
+const A={go,vfs,lmode,lpv(){userPaused=false;nSet(NI-1);try{NP.previousVideo()}catch{}},lnx(){userPaused=false;nSet(NI+1);try{NP.nextVideo()}catch{}},lwd:w=>speak(w),lsk,lfo,lsh(v,t){NH=!NH;try{localStorage.vvlh=NH?'1':'0'}catch{}$('#tx').hidden=NH;t.textContent=NH?'👁 Hiện':'🙈 Ẩn'},ls(){LS[Q[qi]].seen=1;V.learn()},ln(){qi++;V.learn()},lp(v){lfin(+v===EX.i)},lc(){lfin(matchW($('#ti').value,W[EX.i].w))},li(){lfin(false)},say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
  mt(v){mt=v;V.me()},closeSheet,
  music(){S.music=!S.music;save();S.music&&tab!='nghe'?musOn():musOff();topUI();if(tab=='me')V.me()},
  async install(){if(dip){const p=dip;dip=null;p.prompt();try{await p.userChoice}catch{}topUI();return}

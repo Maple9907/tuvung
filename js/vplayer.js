@@ -121,7 +121,9 @@ export class VPlayer {
   tap() {
     const p = this.p; if (!p || this.menu) return;
     try {
-      if (this.st === 1 || this.st === 3) p.pauseVideo();
+      const on = this.st === 1 || this.st === 3;
+      if (this.o.onUser) this.o.onUser(on);   /* người dùng tự dừng (on=true) hoặc tự phát (on=false) */
+      if (on) p.pauseVideo();
       else { if (this.st === 0) p.seekTo(0, true); this.play() }
     } catch { }
     this.show();
@@ -145,17 +147,18 @@ export class VPlayer {
   /* ---------- Cập nhật mỗi 250ms ---------- */
   tick() {
     if (!this.vb.isConnected) return this.destroy();
-    this.fit();
+    const hid = document.hidden;   /* nền (khoá màn hình): không vẽ lại giao diện cho đỡ pin, nhưng vẫn đồng bộ trạng thái và lặp video */
+    if (!hid) this.fit();
     const p = this.p; if (!p || !p.getCurrentTime) return;
     let s; try { s = p.getPlayerState() } catch { return }
     if (s !== this.st) this.state(s);
-    if (!this.drag && Date.now() > this.hold) this.paintTime();
+    if (!hid && !this.drag && Date.now() > this.hold) this.paintTime();
     /* Lặp lại: video nằm trong playlist nên khi hết YouTube sẽ tự nhảy sang video kế. Vì vậy tua về 0 trước khi hết một chút
        (ngưỡng tăng theo tốc độ phát để tick 250ms không bị lỡ). */
     if (this.lp && s === 1 && !this.drag && Date.now() > this.lpT) {
-      try { const d = p.getDuration(); if (d > 3 && d - p.getCurrentTime() < .35 + .25 * this.rate) { this.lpT = Date.now() + 1500; p.seekTo(0, true) } } catch { }
+      try { const d = p.getDuration(); if (d > 3 && d - p.getCurrentTime() < (hid ? 1.2 * this.rate : .35) + .25 * this.rate) { this.lpT = Date.now() + 1500; p.seekTo(0, true) } } catch { }
     }
-    try { this.bf.style.width = Math.min(100, (p.getVideoLoadedFraction() || 0) * 100) + '%' } catch { }
+    if (!hid) try { this.bf.style.width = Math.min(100, (p.getVideoLoadedFraction() || 0) * 100) + '%' } catch { }
   }
   paintTime(t, d) {
     if (t == null) { try { t = this.p.getCurrentTime(); d = this.p.getDuration() } catch { return } }

@@ -34,6 +34,7 @@
   - Nút ⚙ để chỉnh **tốc độ phát**, **chất lượng video**, **phụ đề** và **cỡ chữ phụ đề**. Menu Phụ đề giống YouTube: Tắt · từng phụ đề có sẵn của video (vd. Tiếng Anh, Tiếng Anh được tạo tự động) · Dịch tự động › (Tiếng Việt đứng đầu danh sách). Các lựa chọn được nhớ cho những video sau.
   - Nút phóng to toàn màn hình.
 - Video cần có mạng. Vào tab Nghe thì nhạc nền tự tắt, rời tab thì bật lại.
+- Trên Android, khoá màn hình vẫn nghe tiếp được; thanh thông báo hiện tên bài trong app (vd. “Luyện Nghe Bài 1”, không phải tiêu đề YouTube) kèm nút ⏮ ⏯ ⏭ và thanh tiến trình. iPhone không hỗ trợ phần này.
 
 ## Thiên hà từ vựng
 
