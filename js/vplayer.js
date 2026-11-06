@@ -9,7 +9,8 @@ const RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const QL = { highres: '4320p', hd2880: '2880p', hd2160: '2160p', hd1440: '1440p', hd1080: '1080p', hd720: '720p', large: '480p', medium: '360p', small: '240p', tiny: '144p' };
 const FSZ = [[-1, 'Nhỏ'], [0, 'Vừa'], [1, 'Lớn'], [2, 'Rất lớn']];
 const MODS = ['captions', 'cc'];
-const TRL = { vi: 'Tiếng Việt' };   /* ngôn ngữ cho "Dịch tự động" của YouTube (translationLanguage) */
+const TRL = { vi: 'Vietnamese' };   /* tên YouTube dùng cho translationLanguage (dịch tự động) */
+const SUBS = { en: 'Tiếng Anh', vi: 'Tiếng Việt' };
 
 const ls = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v } catch { return d } },
@@ -41,11 +42,10 @@ export class VPlayer {
     this.rate = +ls.get('vvsp', '1') || 1;
     this.q = ls.get('vvq', 'auto');
     this.cc = ls.get('vvcc', '0') == '1';
-    this.lang = ls.get('vvcl', '');
+    this.lang = ls.get('vvcl', '') === 'vi' || ls.get('vvct', '') === 'vi' ? 'vi' : 'en';   /* ngôn ngữ phụ đề: en | vi */
     this.fsz = +ls.get('vvcf', '0') || 0;
-    this.tr = TRL[ls.get('vvct', '')] ? ls.get('vvct', '') : '';   /* '' = không dịch */
-    this.done = false;
-    this.tracks = []; this.curLang = '';
+    this.done = false; this.pw = false; this.try = 0;
+    this.tracks = []; this.tls = []; this.cur = ''; this.cst = 'idle';   /* cst: idle | wait | ok | none */
     this.ht = this.rt = this.ct = this.qt = 0;
     vb.insertAdjacentHTML('beforeend', MARK);
     const $ = s => vb.querySelector(s);
@@ -91,7 +91,7 @@ export class VPlayer {
     y.dataset.err = 1; y.hidden = false; this.vb.classList.add('err');
     y.textContent = '⚠️ Video này không phát được (mã lỗi ' + c + '). Thử video khác bằng nút ‹ › bên dưới.';
   }
-  api() { if (this.cc && !this.done) this.ccOn(); if (this.menu) this.paintMenu() }
+  api() { if (this.cc && !this.pw && this.cst !== 'ok') this.ccOn(); if (this.menu) this.paintMenu() }
   vidId() { try { return this.p.getVideoData().video_id || '' } catch { return '' } }
 
   /* Áp lại tuỳ chọn của người dùng cho video mới (YouTube tự đặt lại một số thứ khi đổi video) */
@@ -99,7 +99,7 @@ export class VPlayer {
     const p = this.p; if (!p) return;
     try { p.setPlaybackRate(this.rate) } catch { }
     if (this.q !== 'auto') this.setQ(this.q, true);
-    this.tracks = []; this.curLang = ''; this.done = false; clearTimeout(this.ct);
+    this.tracks = []; this.tls = []; this.cur = ''; this.cst = 'idle'; this.done = false; this.pw = false; this.try = 0; clearTimeout(this.ct);
     if (this.cc) this.ccOn(); else this.mod('unloadModule');
   }
 
@@ -149,32 +149,71 @@ export class VPlayer {
   }
   dur() { try { return this.p.getDuration() || 0 } catch { return 0 } }
 
-  /* ---------- Phụ đề ---------- */
+  /* ---------- Phụ đề (của YouTube) ----------
+     YouTube không có API chính thức cho phụ đề trong iframe, chỉ có module ẩn "captions":
+       loadModule → getOption('tracklist') → setOption('track', {…}) (kèm translationLanguage nếu muốn YouTube tự dịch).
+     Hai điều hay làm hỏng:
+       1) Phụ đề TỰ TẠO (asr) chỉ có trong tracklist khi hỏi kèm {includeAsr:true}.
+       2) Danh sách đến muộn sau khi video chạy → phải hỏi lại cho tới khi có (ccOn tự lặp tối đa ~8 giây), rồi kiểm tra lại (check()). */
+  static vars() { return { cc_load_policy: ls.get('vvcc', '0') == '1' ? 1 : 0, cc_lang_pref: ls.get('vvcl', '') === 'vi' ? 'vi' : 'en' } }
   mod(fn) { MODS.forEach(m => { try { this.p[fn](m) } catch { } }) }
-  opt(k) { for (const m of MODS) { try { const v = this.p.getOption(m, k); if (Array.isArray(v) ? v.length : v != null) return v } catch { } } return null }
+  opt(k, a) { for (const m of MODS) { try { const v = a === undefined ? this.p.getOption(m, k) : this.p.getOption(m, k, a); if (Array.isArray(v) ? v.length : v != null && v !== '') return v } catch { } } return null }
   setOpt(k, v) { MODS.forEach(m => { try { this.p.setOption(m, k, v) } catch { } }) }
+  list(v) { return Array.isArray(v) ? v.filter(x => x && x.languageCode) : [] }
+  isAsr(x) { return x.kind === 'asr' || /^a\./.test(x.vss_id || '') }
+  /* Chọn phụ đề gốc: tiếng Anh thật > tiếng Anh tự tạo > track mặc định > track đầu tiên */
+  pick() {
+    const tl = this.tracks; if (!tl.length) return null;
+    const en = tl.filter(x => /^en/i.test(x.languageCode));
+    return en.find(x => !this.isAsr(x)) || en[0] || tl.find(x => x.is_default) || tl.find(x => this.isAsr(x)) || tl[0];
+  }
+  trName() { const t = this.tls.find(x => /^vi/i.test(x.languageCode)); return (t && (t.languageName || t.displayName)) || TRL.vi }
+  /* shape 0: gửi nguyên đối tượng track lấy từ danh sách (đúng như nút phụ đề của YouTube) · shape 1: chỉ languageCode (dự phòng) */
+  applyTrack(shape = 0) {
+    if (!this.p || !this.cc) return;
+    let t = this.pick(), o, tr = false, nm;
+    if (this.lang === 'vi') {   /* có sẵn phụ đề tiếng Việt thật thì dùng luôn, không thì nhờ YouTube dịch */
+      const vi = this.tracks.find(x => /^vi/i.test(x.languageCode) && !this.isAsr(x));
+      if (vi) t = vi;
+    }
+    if (t) { nm = t.displayName || t.languageName || t.languageCode; o = shape ? { languageCode: t.languageCode } : Object.assign({}, t); if (shape && t.kind) o.kind = t.kind }
+    else { nm = 'English (tự tạo)'; o = { languageCode: 'en' } }   /* chưa có danh sách: đoán tiếng Anh */
+    if (this.lang === 'vi' && !/^vi/i.test(o.languageCode) && (!t || t.is_translateable !== false)) { o.translationLanguage = { languageCode: 'vi', languageName: this.trName() }; tr = true }
+    this.cur = nm + (tr ? ' → Tiếng Việt (YouTube tự dịch)' : '');
+    this.setOpt('track', o); this.setOpt('fontSize', this.fsz); this.setOpt('reload', true);
+  }
   ccOn(n = 0) {
     if (!this.p || !this.cc) return;
-    clearTimeout(this.ct); this.mod('loadModule');
-    let tl = this.opt('tracklist'); tl = Array.isArray(tl) ? tl : [];
-    if (!tl.length && n < 3) { this.ct = setTimeout(() => this.ccOn(n + 1), 400); return }   /* danh sách phụ đề đến muộn: chờ một chút */
-    /* YouTube thường KHÔNG liệt kê phụ đề tự tạo trong tracklist. Khi rỗng thì cứ thử bật tiếng Anh (tự tạo) – vẫn chạy được. */
-    this.tracks = tl;
-    const t = tl.find(x => x.languageCode === this.lang) || tl.find(x => /^en/i.test(x.languageCode)) || tl[0];
-    this.curLang = t ? t.languageCode : 'en';
-    this.applyTrack(); this.done = true; this.paintMenu();
+    clearTimeout(this.ct);
+    if (n === 0) { this.mod('loadModule'); this.cst = 'wait'; this.pw = true }
+    let tl = this.list(this.opt('tracklist', { includeAsr: true })); if (!tl.length) tl = this.list(this.opt('tracklist'));
+    if (tl.length) {
+      this.tracks = tl; this.tls = this.list(this.opt('translationLanguages'));
+      this.applyTrack(0); this.done = true; this.pw = false; this.cst = 'ok'; this.paintMenu();
+      this.ct = setTimeout(() => this.check(), 900); return;
+    }
+    if (n === 3) this.applyTrack(0);   /* sau ~1,2 giây vẫn chưa có danh sách: thử bật bừa tiếng Anh (tự tạo), vẫn tiếp tục hỏi lại danh sách */
+    if (n < 20) { this.ct = setTimeout(() => this.ccOn(n + 1), 400); this.paintMenu(); return }
+    this.pw = false; this.cst = 'none'; this.paintMenu();
   }
-  /* Chọn track + (nếu có) dịch tự động sang ngôn ngữ khác */
-  applyTrack() {
-    const o = { languageCode: this.curLang };
-    if (this.tr && !this.curLang.toLowerCase().startsWith(this.tr)) o.translationLanguage = { languageCode: this.tr, languageName: TRL[this.tr] };
-    this.setOpt('track', o); this.setOpt('fontSize', this.fsz);
+  /* Hỏi lại YouTube xem đã nhận phụ đề chưa; nếu chưa (hoặc nhận sai) thì gửi lại bằng dạng đơn giản hơn */
+  check() {
+    if (!this.p || !this.cc) return;
+    const c = this.opt('track');
+    const ok = c && c.languageCode && (this.lang !== 'vi' || /^vi/i.test(c.languageCode) || (c.translationLanguage && /^vi/i.test(c.translationLanguage.languageCode)));
+    if (!ok && this.try < 1) { this.try++; this.applyTrack(1); this.ct = setTimeout(() => this.check(), 900) }
+    this.paintMenu();
   }
-  ccOff() { clearTimeout(this.ct); this.mod('unloadModule'); this.curLang = '' }
+  ccOff() { clearTimeout(this.ct); this.pw = false; this.cst = 'idle'; this.mod('unloadModule') }
   setCC(on) {
-    this.cc = on; ls.set('vvcc', on ? '1' : '0'); this.done = false;
+    this.cc = on; ls.set('vvcc', on ? '1' : '0'); this.done = false; this.try = 0;
     if (on) this.ccOn(); else this.ccOff();
     this.paintCC(); this.paintMenu();
+  }
+  setSub(v) {
+    if (v === 'off') return this.setCC(false);
+    this.lang = v === 'vi' ? 'vi' : 'en'; ls.set('vvcl', this.lang); ls.set('vvct', '');
+    this.cc = true; ls.set('vvcc', '1'); this.done = false; this.try = 0; this.ccOn(); this.paintCC(); this.paintMenu();
   }
   paintCC() { this.ccb.classList.toggle('on', this.cc); this.ccb.setAttribute('aria-pressed', this.cc) }
 
@@ -210,14 +249,13 @@ export class VPlayer {
     if (!this.menu) return;
     const chip = (c, v, label, on) => `<button class="mchip${on ? ' on' : ''}" data-c="${c}" data-v="${esc(v)}">${esc(label)}</button>`;
     const cur = this.curQ(), mv = this.mv || 'main';
-    const trackName = () => { const t = this.tracks.find(x => x.languageCode === this.curLang); return (t ? (t.displayName || t.languageName || t.languageCode) : this.curLang === 'en' ? 'Tiếng Anh' : 'Bật') + (this.tr ? ' → ' + TRL[this.tr] : '') };
     const TT = { rate: 'Tốc độ phát', q: 'Chất lượng video', cc: 'Phụ đề', fsz: 'Cỡ chữ phụ đề' };
     let body = '';
     if (mv === 'main') {
       const row = (k, val) => `<button class="mrow" data-c="mv" data-v="${k}"><span>${TT[k]}</span><span>${esc(val)} ›</span></button>`;
       body = row('rate', this.rate == 1 ? 'Chuẩn (1×)' : this.rate + '×')
         + row('q', this.q === 'auto' ? 'Tự động' + (QL[cur] ? ' (' + QL[cur] + ')' : '') : (QL[this.q] || this.q))
-        + row('cc', this.cc ? trackName() : 'Tắt')
+        + row('cc', this.cc ? SUBS[this.lang] : 'Tắt')
         + row('fsz', (FSZ.find(x => x[0] === this.fsz) || FSZ[1])[1]);
     } else if (mv === 'rate') {
       body = '<div class="mc">' + this.rates().map(r => chip('rate', r, r == 1 ? '1× Chuẩn' : r + '×', Math.abs(r - this.rate) < .001)).join('') + '</div>';
@@ -227,12 +265,14 @@ export class VPlayer {
         + lv.map(x => chip('q', x, QL[x], this.q === x)).join('') + '</div>'
         + (lv.length ? '' : '<div class="mn">Các mức chất lượng hiện sau khi video bắt đầu phát.</div>');
     } else if (mv === 'cc') {
-      const list = this.tracks.length ? this.tracks : [{ languageCode: 'en', displayName: 'Tiếng Anh' }];
-      body = '<div class="mt">Ngôn ngữ phụ đề</div><div class="mc">' + chip('ccoff', '', 'Tắt', !this.cc)
-        + list.map(t => chip('track', t.languageCode, t.displayName || t.languageName || t.languageCode, this.cc && this.curLang === t.languageCode)).join('') + '</div>'
-        + '<div class="mt">Dịch tự động sang</div><div class="mc">' + chip('tr', '', 'Không dịch', !this.tr)
-        + Object.entries(TRL).map(([k, n]) => chip('tr', k, n, this.tr === k)).join('') + '</div>'
-        + (this.cc && !this.tracks.length ? '<div class="mn">Đang thử bật phụ đề tiếng Anh (tự tạo). Nếu không thấy chữ, video này có thể không có phụ đề.</div>' : '');
+      const hasVi = this.tracks.some(x => /^vi/i.test(x.languageCode) && !this.isAsr(x));
+      const note = !this.cc ? '' : this.cst === 'wait' ? 'Đang lấy phụ đề từ YouTube…'
+        : this.cst === 'none' ? 'YouTube không báo có phụ đề cho video này. Nếu video có phụ đề, thử chạm lại ngôn ngữ một lần nữa.'
+        : this.cur ? 'Đang dùng: ' + this.cur : '';
+      body = '<div class="mt">Phụ đề</div><div class="mc">' + chip('sub', 'off', 'Tắt', !this.cc)
+        + chip('sub', 'en', 'Tiếng Anh', this.cc && this.lang === 'en')
+        + chip('sub', 'vi', hasVi ? 'Tiếng Việt' : 'Tiếng Việt (dịch tự động)', this.cc && this.lang === 'vi') + '</div>'
+        + (note ? '<div class="mn">' + esc(note) + '</div>' : '');
     } else if (mv === 'fsz') {
       body = '<div class="mc">' + FSZ.map(([v, l]) => chip('fsz', v, l, this.fsz === v)).join('') + '</div>';
     }
@@ -253,9 +293,7 @@ export class VPlayer {
       else if (c === 'mb') { this.mv = 'main'; this.paintMenu() }
       else if (c === 'rate') { this.mv = 'main'; this.setRate(+v) }
       else if (c === 'q') { this.mv = 'main'; this.setQ(v) }
-      else if (c === 'ccoff') this.setCC(false)
-      else if (c === 'track') { this.lang = v; ls.set('vvcl', v); this.cc = true; ls.set('vvcc', '1'); this.done = false; this.ccOn(); this.paintCC(); this.paintMenu() }
-      else if (c === 'tr') { this.tr = v; ls.set('vvct', v); this.cc = true; ls.set('vvcc', '1'); this.done = false; this.ccOn(); this.paintCC(); this.paintMenu() }
+      else if (c === 'sub') this.setSub(v)
       else if (c === 'fsz') { this.mv = 'main'; this.fsz = +v; ls.set('vvcf', v); this.setOpt('fontSize', this.fsz); this.paintMenu() }
     });
     /* Thanh tua: kéo hoặc chạm. Khi video đang phóng to bằng CSS và bị xoay 90° (iPhone dọc) thì trục kéo là dọc. */

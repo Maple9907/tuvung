@@ -30,8 +30,8 @@
 - Khung video chỉ có video, không hiện tiêu đề hay gợi ý của YouTube:
   - Chạm vào video để phát hoặc tạm dừng.
   - Thanh tua kéo được, hiện giờ hiện tại và tổng thời gian.
-  - Nút **CC** bật/tắt phụ đề.
-  - Nút ⚙ để chỉnh **tốc độ phát**, **chất lượng video**, **ngôn ngữ phụ đề**, **dịch phụ đề sang tiếng Việt** và **cỡ chữ phụ đề**. Các lựa chọn được nhớ cho những video sau.
+  - Nút **CC** bật/tắt phụ đề của YouTube (hiện ngay trên video).
+  - Nút ⚙ để chỉnh **tốc độ phát**, **chất lượng video**, **phụ đề** (Tắt / Tiếng Anh / Tiếng Việt – YouTube tự dịch) và **cỡ chữ phụ đề**. Các lựa chọn được nhớ cho những video sau.
   - Nút phóng to toàn màn hình.
 - Video cần có mạng. Vào tab Nghe thì nhạc nền tự tắt, rời tab thì bật lại.
 

@@ -351,7 +351,7 @@ V.nghe=()=>{vfsOff();NVP&&NVP.destroy();NVP=null;try{NP&&NP.destroy()}catch{}NP=
 <div id="tx" class="tx${NCal?' cal':''}"${NH?' hidden':''}></div></div>`);
  NVP=new VPlayer($('#vb'),{toast});vfsUI();nUI();txLoad();
  ytLoad().then(()=>{if(tab!='nghe'||!$('#yt'))return;
-  NP=new YT.Player('yt',{host:'https://www.youtube-nocookie.com',width:'100%',height:'100%',playerVars:{listType:'playlist',list:nM().pl,index:NI,playsinline:1,rel:0,modestbranding:1,fs:0,controls:0,disablekb:1,iv_load_policy:3,cc_load_policy:0,...(location.protocol.startsWith('http')?{origin:location.origin}:{})},
+  NP=new YT.Player('yt',{host:'https://www.youtube-nocookie.com',width:'100%',height:'100%',playerVars:{listType:'playlist',list:nM().pl,index:NI,playsinline:1,rel:0,modestbranding:1,fs:0,controls:0,disablekb:1,iv_load_policy:3,...VPlayer.vars(),...(location.protocol.startsWith('http')?{origin:location.origin}:{})},
    events:{onReady:e=>{NVP&&NVP.attach(e.target);const n=e.target.getPlaylist&&e.target.getPlaylist();if(n&&n.length){NN=n.length;NPLs=n;if(nCi(NI)!=NCl)txLoad()}const y=$('#ye');if(y)y.hidden=true;nUI()},
     onStateChange:e=>{NVP&&NVP.state(e.data);try{const i=NP.getPlaylistIndex();if(i>=0&&i!=NI)nSet(i);else nUI()}catch{}},onError:e=>NVP&&NVP.error(e.data),onApiChange:()=>NVP&&NVP.api()}})
  }).catch(()=>{const y=$('#ye');if(y)y.textContent='📡 Cần có mạng để xem video. Nội dung bên dưới vẫn đọc được.'})};
