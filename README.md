@@ -1,24 +1,61 @@
 # Học Từ Vựng
 
-Ứng dụng web trên điện thoại giúp bạn học từ vựng tiếng Anh mỗi ngày: nhẹ, nhanh, học được cả khi không có mạng.
+Ứng dụng học từ vựng tiếng Anh và luyện nghe trên điện thoại. Phần học từ vựng dùng được cả khi không có mạng.
 
-## Tính năng
+## Học từ vựng
 
-- **5.000 từ vựng thông dụng** từ A1 đến C1, kèm phiên âm, nghĩa tiếng Việt, ví dụ và bản dịch ví dụ.
-- **Flashcard thông minh**: chạm để lật thẻ, nghe phát âm, và ứng dụng tự lên lịch ôn lại đúng lúc bạn sắp quên (lặp lại ngắt quãng).
-- **6 chế độ chơi** để luyện từ theo cách vui hơn.
-- **Thiên hà từ vựng 3D**: mỗi từ đã học là một ngôi sao, càng học nhiều thiên hà càng sáng.
-- **Âm thanh hiệu ứng** tự tạo bằng code (đúng/sai, combo, lật thẻ, hoàn thành, lên cấp), tắt/bật trong mục Tôi.
-- **Điểm kinh nghiệm, chuỗi ngày học và cấp độ** để giữ động lực.
-- **Màn hình đăng nhập đầu tiên**: Google, email/mật khẩu hoặc **tài khoản khách**.
-- **Bảng xếp hạng**: đăng nhập bằng Google hoặc email để đồng bộ tiến độ giữa các thiết bị và thi đua cùng mọi người.
-- **Tài khoản khách (online)**: dùng đăng nhập ẩn danh của Firebase nên vẫn đồng bộ, chơi online và có tên trên bảng xếp hạng. Có thể liên kết Google/email sau (Tôi → Tài khoản) để giữ tiến độ. Nếu không kết nối được, app tự chuyển sang chế độ khách ngoại tuyến (vẫn xem được bảng xếp hạng).
-- **Nhạc nền**: Nút 🎵 trên thanh trên để bật/tắt, chỉnh âm lượng trong Tôi → Âm thanh. Nhạc bắt đầu sau lần chạm đầu tiên (quy định của trình duyệt) và tự tạm dừng khi bạn thoát khỏi app.
-- **Cài về máy**: nút "⬇ Cài về máy" trên thanh trên (tự ẩn khi đã cài). Android/Chrome cài trực tiếp; iPhone hiện hướng dẫn Safari → Chia sẻ → Thêm vào MH chính. Cần mở bằng https.
-- **Giao diện gọn cho điện thoại**: mỗi màn hình vừa khít một khung hình, thẻ học tự co theo chiều cao màn hình, mục Tôi chia thành 4 tab (Học, Âm thanh, Tài khoản, Xếp hạng).
+- 5.000 từ thông dụng từ A1 đến C1, có phiên âm, nghĩa tiếng Việt, câu ví dụ và bản dịch.
+- Flashcard: chạm để lật thẻ, nghe phát âm. App tự xếp lịch ôn lại đúng lúc bạn sắp quên.
+- Từ mới được kiểm tra ngay, trả lời đúng 2 lần thì vào lịch ôn.
+- Tự chọn cấp độ muốn học, số từ mới mỗi ngày, giọng đọc Anh hoặc Mỹ, bật/tắt tự động đọc khi học.
 
-Chưa đăng nhập vẫn học bình thường, tiến độ được lưu ngay trên máy.
+## Chơi
 
-## Tên hiển thị
+6 chế độ luyện từ:
 
-Tên không được trùng (không phân biệt hoa/thường, khoảng trắng thừa được gộp), kiểm tra ngay khi gõ. Mỗi tên được giữ chỗ trong `names/<tên>` của Realtime Database. Mỗi tài khoản đổi tên tối đa 1 lần / 24 giờ (ô đổi tên bị làm mờ trong thời gian đó).
+- Trắc nghiệm (Anh → Việt)
+- Đoán từ (Việt → Anh)
+- Nghe & chọn
+- Điền chỗ trống
+- Gõ từ
+- Tốc độ 60 giây, có lưu kỷ lục
+
+## Nghe
+
+- Hai mục: **Nghe 5 phút** (45 video) và **Nghe sâu** (47 video). App nhớ video đang nghe của từng mục.
+- Chữ của video hiện bên dưới, dòng đang nói được tô sáng và tự cuộn theo. Chạm vào giờ ở đầu dòng để tua video tới câu đó.
+- Chạm vào một từ tiếng Anh để nghe phát âm.
+- Nút **Ẩn/Hiện** để nghe trước, xem chữ sau. Nút **Tự cuộn** để bật/tắt cuộn theo video.
+- Nếu dòng chữ lệch so với video, bấm **Ghim** rồi chạm giờ ở đầu câu đang đọc để chỉnh lại. **Xoá mốc** để bỏ.
+- Khung video chỉ có video, không hiện tiêu đề hay gợi ý của YouTube:
+  - Chạm vào video để phát hoặc tạm dừng.
+  - Thanh tua kéo được, hiện giờ hiện tại và tổng thời gian.
+  - Nút **CC** bật/tắt phụ đề.
+  - Nút ⚙ để chỉnh **tốc độ phát**, **chất lượng video**, **ngôn ngữ phụ đề**, **dịch phụ đề sang tiếng Việt** và **cỡ chữ phụ đề**. Các lựa chọn được nhớ cho những video sau.
+  - Nút phóng to toàn màn hình.
+- Video cần có mạng. Vào tab Nghe thì nhạc nền tự tắt, rời tab thì bật lại.
+
+## Thiên hà từ vựng
+
+Mỗi từ đã học là một ngôi sao trong thiên hà 3D. Học càng nhiều, thiên hà càng sáng.
+
+## Động lực học
+
+- Điểm kinh nghiệm, chuỗi ngày học và cấp độ.
+- Bảng xếp hạng top 10.
+- Âm thanh hiệu ứng khi đúng, sai, combo, lật thẻ, hoàn thành, lên cấp.
+- Nhạc nền êm, bật/tắt bằng nút 🎵 trên cùng, chỉnh âm lượng trong Tôi → Âm thanh.
+- Hiệu ứng 3D có thể tắt để đỡ tốn pin.
+
+## Tài khoản và dữ liệu
+
+- Không cần đăng nhập vẫn học bình thường, tiến độ lưu trên máy.
+- Đăng nhập bằng Google, email hoặc **tài khoản khách** để đồng bộ tiến độ giữa các thiết bị và có tên trên bảng xếp hạng.
+- Tài khoản khách có thể liên kết với Google hoặc email sau để không mất tiến độ (Tôi → Tài khoản).
+- Tên hiển thị không được trùng với người khác, mỗi tài khoản đổi tên tối đa 1 lần mỗi 24 giờ.
+- Sao lưu tiến độ ra file `.json` và khôi phục lại trong Tôi → Tài khoản.
+
+## Cài về máy
+
+- Android (Chrome): bấm nút **⬇ Cài về máy** trên thanh trên cùng.
+- iPhone: mở bằng Safari → Chia sẻ → **Thêm vào MH chính**.
