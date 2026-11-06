@@ -211,7 +211,7 @@ cv.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p||!gal.
  if(bg.visible){bg.rotation.y+=(px*.6-bg.rotation.y)*.03+.0008;bg.rotation.x+=(py*.4-bg.rotation.x)*.03;bg.scale.setScalar(1+pulse*.25);cr.rotation.x=t*(.3+S.streak*.03);cr.rotation.y=t*.4}
  if(gal.visible&&!ptrs.size)gal.rotation.y+=.0016;const on=S.fx||tab=='galaxy';cv.style.visibility=on?'visible':'hidden';if(on)R.render(sc,cam)})();
 /* ---------- Views ---------- */
-const go=t=>{vfsOff();if(G)G.over=1;clearInterval(G?.tm);if(t=='learn'&&tab!='learn')Q=null;if(t=='nghe')musOff();else if(tab=='nghe'&&S.music)musOn();tab=t;document.body.classList.toggle('gal',t=='galaxy');bg.visible=t!='galaxy';gal.visible=t=='galaxy';cam.position.z=t=='galaxy'?zf:14;
+const go=t=>{vfsOff();if(tab=='nghe'&&t!='nghe')nMediaOff();if(G)G.over=1;clearInterval(G?.tm);if(t=='learn'&&tab!='learn')Q=null;if(t=='nghe')musOff();else if(tab=='nghe'&&S.music)musOn();tab=t;document.body.classList.toggle('gal',t=='galaxy');bg.visible=t!='galaxy';gal.visible=t=='galaxy';cam.position.z=t=='galaxy'?zf:14;
  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v==t));$('#main').scrollTop=0;if(t=='galaxy')paintGal();V[t]()};
 V.home=()=>{const ids=Object.keys(S.cards),mast=ids.filter(i=>S.cards[i].iv>=21).length,due=ids.filter(i=>S.cards[i].due<=Date.now()).length,nl=Math.max(0,S.nd-S.nn);
  const bars=L.map(l=>{const tot=W.filter(x=>x.c==l).length,k=ids.filter(i=>W[i].c==l).length;return`<div class="pr"><span>${l}</span><div class="bar"><i style="width:${k/tot*100}%;background:#${LC[l].toString(16).padStart(6,0)}"></i></div><span>${k}/${tot}</span></div>`}).join('');
@@ -322,7 +322,21 @@ async function txLoad(){const el=$('#tx');if(!el)return;const i=NI,c=nCi(i),n=St
  catch{if(i==NI&&$('#tx'))$('#tx').innerHTML='<div class="m">Video này chưa có phụ đề'+(NMD=='q'?'.':' (thêm file <b>'+nM().dir+n+'.txt</b>).')+'</div>'}}
 /* Tên hiển thị ngắn gọn (thay tiêu đề YouTube): video 6–9 là loại Nghe + Đọc, còn lại là Nghe. X = số thứ tự video (X/47) */
 const NRD=[6,7,8,9],nTitle=i=>NMD=='q'?'Luyện Nghe 5 Phút Bài '+(i+1):(NRD.includes(i+1)?'Luyện Nghe Và Đọc Bài ':'Luyện Nghe Bài ')+(i+1);
-function nUI(){const c=$('#lc'),t=$('#lt');if(c)c.textContent='Video '+(NI+1)+'/'+NN;if(t)t.textContent=nTitle(NI)}
+function nUI(){const c=$('#lc'),t=$('#lt');if(c)c.textContent='Video '+(NI+1)+'/'+NN;if(t)t.textContent=nTitle(NI);nMedia()}
+/* Thanh thông báo / màn hình khoá (Media Session): hiện tên đã sửa trong app (nTitle) thay vì tiêu đề YouTube.
+   Nút ⏮ ⏭ ⏯ trên thông báo điều khiển đúng video đang nghe. Rời tab Nghe thì gỡ hết (nMediaOff). */
+const nMS='mediaSession'in navigator?navigator.mediaSession:null,
+ nArt=()=>['192','512'].map(z=>({src:new URL('icons/icon-'+z+'.png',location.href).href,sizes:z+'x'+z,type:'image/png'}));
+function nMedia(){if(!nMS||tab!='nghe'||typeof MediaMetadata!='function')return;
+ try{const t=nTitle(NI),al=NMD=='q'?'Nghe 5 phút':'Nghe sâu',m=nMS.metadata;
+  if(!m||m.title!=t||m.album!=al)nMS.metadata=new MediaMetadata({title:t,artist:'Học Từ Vựng',album:al,artwork:nArt()});
+  const on=(a,f)=>{try{nMS.setActionHandler(a,f)}catch{}};
+  on('play',()=>{try{NP.playVideo()}catch{}});on('pause',()=>{try{NP.pauseVideo()}catch{}});
+  on('previoustrack',NI>0?()=>A.lpv():null);on('nexttrack',NI<NN-1?()=>A.lnx():null);
+  on('seekbackward',d=>{try{NP.seekTo(Math.max(0,NP.getCurrentTime()-((d&&d.seekOffset)||10)),true)}catch{}});
+  on('seekforward',d=>{try{NP.seekTo(NP.getCurrentTime()+((d&&d.seekOffset)||10),true)}catch{}});
+  on('seekto',d=>{try{if(d&&d.seekTime!=null)NP.seekTo(d.seekTime,true)}catch{}})}catch{}}
+function nMediaOff(){if(!nMS)return;try{nMS.metadata=null;['play','pause','previoustrack','nexttrack','seekbackward','seekforward','seekto'].forEach(a=>{try{nMS.setActionHandler(a,null)}catch{}})}catch{}}
 function nSet(i){if(!(i>=0&&i<NN)||i==NI)return;NI=i;try{localStorage[nM().ik]=i}catch{}nUI();txLoad();const m=$('#main');if(m)m.scrollTop=0}
 /* Phóng to video: dùng Fullscreen API nếu trình duyệt cho phép (Android/iPad), nếu không (iPhone) thì phóng to bằng CSS, tự xoay ngang khi máy đang dọc */
 const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||null,
