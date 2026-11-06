@@ -28,7 +28,7 @@ function grade(i,g){const nw=!S.cards[i];S.cards[i]=nxt(S.cards[i],g);nw?S.nn++:
 """
 s=s[:a]+FS+s[b:]
 a=s.index("function buildQ(){");b=s.index("\n",a)
-s=s[:a]+"function buildQ(){const now=Date.now();let d=[],n=[];W.forEach((x,i)=>{const c=S.cards[i];if(c){if(c.due<=now)d.push(i)}else if(S.lv.includes(x.c)&&!(S.fw&&x.fw)&&!(S.rare&&x.z<3.2))n.push(i)});d.sort((a,b)=>S.cards[a].due-S.cards[b].due);n.sort((a,b)=>W[a].ord-W[b].ord);return[...d.slice(0,40),...n.slice(0,Math.max(0,S.nd-S.nn))]}"+s[b:]
+s=s[:a]+"function buildQ(){const now=Date.now();let d=[],n=[];W.forEach((x,i)=>{const c=S.cards[i];if(c){if(c.due<=now)d.push(i)}else if(S.lv.includes(x.c))n.push(i)});d.sort((a,b)=>S.cards[a].due-S.cards[b].due);n.sort((a,b)=>W[a].ord-W[b].ord);return[...d.slice(0,40),...n.slice(0,Math.max(0,S.nd-S.nn))]}"+s[b:]
 # ---- game: đúng KHÔNG đổi lịch; sai thì ôn sớm hơn; XP luyện nhỏ hơn XP học ----
 rep("if(S.cards[q.i])S.cards[q.i]=nxt(S.cards[q.i],ok?2:0);","{const cd=S.cards[q.i];if(cd&&!ok&&cd.due>Date.now())cd.due=Date.now()}")
 rep("G.xp+=10+Math.min(G.combo,10)","G.xp+=2+(G.combo>=5?1:0)")
@@ -59,10 +59,7 @@ function lfin(ok){if(!EX||EX.done)return;EX.done=true;const i=EX.i,ms=Date.now()
  save();h(`<div class="fill">${lhead()}<div class="card ct" style="color:${ok?'#3ddc97':'#ff6b81'}"><b style="font-size:20px">${ok?'Đúng ✔':'Chưa đúng'}</b></div>${info(i)}<button class="btn" data-a="ln">Tiếp</button></div>`);if(ok||S.auto)speak(W[i].w)}
 """
 s=s[:a]+LEARN+s[b:]
-rep("const A={go,","const A={go,ls(){LS[Q[qi]].seen=1;V.learn()},ln(){qi++;V.learn()},lp(v){lfin(+v===EX.i)},lc(){lfin(matchW($('#ti').value,W[EX.i].w))},li(){lfin(false)},fw(){S.fw=!S.fw;save();Q=null;V.me()},rare(){S.rare=!S.rare;save();Q=null;V.me()},")
-rep("""data-a="lv" data-v="${l}">${l}</button>`).join('')}</div></div>""","""data-a="lv" data-v="${l}">${l}</button>`).join('')}</div></div>
-  <div style="padding:10px 0;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center"><span>Ẩn từ chức năng (giới từ, đại từ…)</span>${sw(S.fw,'fw')}</div>
-  <div style="padding:10px 0;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center"><span>Ẩn từ hiếm (ít gặp đời thường)</span>${sw(S.rare,'rare')}</div>""")
+rep("const A={go,","const A={go,ls(){LS[Q[qi]].seen=1;V.learn()},ln(){qi++;V.learn()},lp(v){lfin(+v===EX.i)},lc(){lfin(matchW($('#ti').value,W[EX.i].w))},li(){lfin(false)},")
 open(P,'w',encoding='utf8').write(s)
 # ---- words.js: GIỮ NGUYÊN THỨ TỰ cũ (khoá tiến độ theo chỉ số) + trường mới ----
 src=open('tools/words-original.js',encoding='utf8').read();old=json.loads(src[src.index('['):src.rindex(']')+1])

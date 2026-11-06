@@ -47,4 +47,6 @@ Vào Firebase Console → **Authentication → Sign-in method → Anonymous → 
 - **Lỗi `LS`**: trạng thái từng từ trong phiên học không bao giờ được xoá, nên app mở liên tục nhiều ngày sẽ bỏ qua bước chấm lịch của thẻ ôn. Nay xoá mỗi khi dựng lại hàng đợi, và hàng đợi đã xong của ngày hôm trước sẽ được dựng lại.
 - **Phiên âm**: trả về phiên âm Anh-Anh gốc (v3 từng đổi 4.034 từ sang kiểu Mỹ, lệch với giọng đọc mặc định en-GB). `tools/ipa.py` đã bỏ, `build_data.py` giữ phiên âm gốc.
 - **Khởi động**: three.js và Firebase tải song song, mạng treo chờ tối đa 8 giây (trước đó 16 giây).
+- **Tự động đọc khi học**: bật mặc định (Tôi → Học). Người dùng cũ được bật một lần khi cập nhật (đánh dấu bằng trường `ap`); tắt đi thì giữ nguyên, kể cả khi đồng bộ cloud.
+- **Bỏ hai cài đặt "Ẩn từ chức năng" và "Ẩn từ hiếm"**: người học học hết toàn bộ từ trong cấp độ đã chọn (từ chức năng vẫn được xếp xuống cuối mỗi cấp).
 - `sw.js` tăng lên `vv-v10` để máy đã cài nhận `words.js` mới.

@@ -15,8 +15,9 @@ const{initializeApp,getDatabase,ref,set,get,remove,query,orderByChild,limitToLas
 const $=s=>document.querySelector(s),h=s=>$('#main').innerHTML=s,esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const L=['A1','A2','B1','B2','C1'],LC={A1:0x3ddc97,A2:0x4cc9f0,B1:0x7c9cff,B2:0xc77dff,C1:0xff6b81};
 const dayOf=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')},day=()=>dayOf(Date.now()),sh=v=>v.split(/[;,(]/)[0].trim(),rnd=a=>a[Math.random()*a.length|0];
-function def(){return{xp:0,streak:0,last:'',day:day(),nn:0,rv:0,cards:{},lv:['A1','A2'],nd:10,acc:'en-GB',auto:false,name:'',upd:0,best:0,owner:'',fx:true,sfx:true,music:true,mv:.5,nc:0}}
-let S;try{S=Object.assign(def(),JSON.parse(localStorage.vv))}catch{S=def()}
+function def(){return{xp:0,streak:0,last:'',day:day(),nn:0,rv:0,cards:{},lv:['A1','A2'],nd:10,acc:'en-GB',auto:true,ap:1,name:'',upd:0,best:0,owner:'',fx:true,sfx:true,music:true,mv:.5,nc:0}}
+function mig(o){if(o&&o.ap==null){o.auto=true;o.ap=1}return o}
+let S;try{S=Object.assign(def(),mig(JSON.parse(localStorage.vv)))}catch{S=def()}
 if(S.day!==day()){S.day=day();S.nn=0;S.rv=0}
 const lvl=()=>Math.floor(Math.sqrt(S.xp/50))+1;
 /* ---------- Firebase (Auth + Realtime DB) ---------- */
@@ -30,7 +31,7 @@ function merge(a,b){const n=a.upd>=b.upd?a:b,r=Object.assign(def(),n),ca=a.cards
  {const na=a.nc||0,nb=b.nc||0;r.nc=Math.max(na,nb);r.name=na!=nb?(na>nb?a.name:b.name):(/^Khách /.test(a.name||'')&&b.name?b.name:(r.name||a.name||b.name||''))}if(r.day!==day()){r.day=day();r.nn=0;r.rv=0}return r}
 async function push(){await set(ref(db,'users/'+uid),S);await set(ref(db,'leaderboard/'+uid),{n:S.name||'Ẩn danh',xp:S.xp,st:S.streak,lv:lvl(),t:serverTimestamp()})}
 async function pull(){cs='⏳ Đang đồng bộ…';refresh();try{const d=(await get(ref(db,'users/'+uid))).val();
- if(d){const nc={};Object.entries(d.cards||{}).forEach(([k,v])=>{if(v)nc[k]=v});d.cards=nc}
+ if(d){const nc={};Object.entries(d.cards||{}).forEach(([k,v])=>{if(v)nc[k]=v});d.cards=nc;mig(d)}
  if(S.owner&&S.owner!==uid&&S.owner!==localStorage.vvao)S=d?Object.assign(def(),d):def();else S=d?merge(S,d):S;
  S.owner=uid;if(!usr.isAnonymous)localStorage.removeItem('vvao');await ensureName();localStorage.vv=JSON.stringify(S);await push();cs='☁️ Đã đồng bộ'}catch(e){cs='📴 Lỗi đồng bộ: '+(e.code||e.message)}refresh()}
 function cloud(){if(!usr)return;clearTimeout(tm);tm=setTimeout(()=>push().then(()=>cs='☁️ Đã đồng bộ').catch(e=>cs='📴 Lỗi: '+(e.code||'')),2500)}
@@ -125,7 +126,7 @@ const toCard=(c,now=Date.now())=>c.S?{due:new Date(c.due),stability:c.S,difficul
 function nxt(c,g,now=Date.now()){const d=new Date(now),r=FS.next(c?toCard(c,now):createEmptyCard(d),d,g+1).card;return Object.assign({},c||{},{n:r.reps,iv:r.scheduled_days,lp:r.lapses,due:r.due.getTime(),ts:now,S:r.stability,D:r.difficulty,ef:(c&&c.ef)||2.5})}
 const ivl=(c,g)=>g==0?'<1p':(n=>n<1?'1 ngày':Math.round(n)+' ngày')(nxt(c,g).iv);
 function grade(i,g){const nw=!S.cards[i];S.cards[i]=nxt(S.cards[i],g);nw?S.nn++:S.rv++}
-function buildQ(){const now=Date.now();let d=[],n=[];W.forEach((x,i)=>{const c=S.cards[i];if(c){if(c.due<=now)d.push(i)}else if(S.lv.includes(x.c)&&!(S.fw&&x.fw)&&!(S.rare&&x.z<3.2))n.push(i)});d.sort((a,b)=>S.cards[a].due-S.cards[b].due);n.sort((a,b)=>W[a].ord-W[b].ord);return[...d.slice(0,40),...n.slice(0,Math.max(0,S.nd-S.nn))]}
+function buildQ(){const now=Date.now();let d=[],n=[];W.forEach((x,i)=>{const c=S.cards[i];if(c){if(c.due<=now)d.push(i)}else if(S.lv.includes(x.c))n.push(i)});d.sort((a,b)=>S.cards[a].due-S.cards[b].due);n.sort((a,b)=>W[a].ord-W[b].ord);return[...d.slice(0,40),...n.slice(0,Math.max(0,S.nd-S.nn))]}
 function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang=S.acc;u.rate=.9;speechSynthesis.speak(u)}catch{}}
 /* ---------- Âm thanh (Web Audio: tự tạo bằng code, không cần file, chạy offline) ---------- */
 let AC=null,MG=null,MB=null;
@@ -272,8 +273,6 @@ const lbRow=(u,k)=>`<div class="lr hit lb${u.id==uid?' me':''}"><span class="rk"
 V.me=()=>{const tabs=[['set','Học'],['snd','Âm thanh'],['acc','Tài khoản'],['lb','Xếp hạng']];let b='';
  if(mt=='set')b=`<div class="card"><div style="border-bottom:1px solid var(--b)"><div class="lr" style="border-bottom:0"><span>Tên hiển thị</span><input id="nm" value="${esc(S.name)}" maxlength="16" placeholder="Ẩn danh" style="width:55%${nameLock()?';opacity:.45':''}"${nameLock()?' disabled':''}></div><div id="nh" class="m" hidden style="text-align:right;padding-bottom:8px"></div></div>
  <div style="padding:10px 0;border-bottom:1px solid var(--b)"><div style="margin-bottom:6px">Cấp độ muốn học</div><div class="lv">${L.map(l=>`<button class="chip ${S.lv.includes(l)?'on':''}" data-a="lv" data-v="${l}">${l}</button>`).join('')}</div></div>
-  <div style="padding:10px 0;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center"><span>Ẩn từ chức năng (giới từ, đại từ…)</span>${sw(S.fw,'fw')}</div>
-  <div style="padding:10px 0;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center"><span>Ẩn từ hiếm (ít gặp đời thường)</span>${sw(S.rare,'rare')}</div>
  <div class="lr"><span>Từ mới mỗi ngày</span><span><button class="chip" data-a="nd" data-v="-5">−</button><b>${S.nd}</b><button class="chip" data-a="nd" data-v="5">+</button></span></div>
  <div class="lr"><span>Giọng đọc</span><button class="chip on" data-a="acc">${S.acc=='en-GB'?'🇬🇧 Anh':'🇺🇸 Mỹ'}</button></div>
  <div class="lr"><span>Tự động đọc khi học</span>${sw(S.auto,'auto')}</div></div>`;
@@ -296,7 +295,7 @@ function closeSheet(){const e=$('#sheet');if(e)e.remove()}
 function modal(html){closeSheet();const d=document.createElement('div');d.id='sheet';d.innerHTML='<div>'+html+'</div>';d.addEventListener('click',e=>{if(e.target===d)closeSheet()});document.body.appendChild(d)}
 let tt;function toast(m,ms){let e=$('#toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e)}e.textContent=m;e.hidden=false;clearTimeout(tt);tt=setTimeout(()=>e.hidden=true,ms||2500)}
 /* ---------- Actions ---------- */
-const A={go,ls(){LS[Q[qi]].seen=1;V.learn()},ln(){qi++;V.learn()},lp(v){lfin(+v===EX.i)},lc(){lfin(matchW($('#ti').value,W[EX.i].w))},li(){lfin(false)},fw(){S.fw=!S.fw;save();Q=null;V.me()},rare(){S.rare=!S.rare;save();Q=null;V.me()},say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
+const A={go,ls(){LS[Q[qi]].seen=1;V.learn()},ln(){qi++;V.learn()},lp(v){lfin(+v===EX.i)},lc(){lfin(matchW($('#ti').value,W[EX.i].w))},li(){lfin(false)},say:i=>speak(W[i].w),spq:()=>speak(G.q.s),
  mt(v){mt=v;V.me()},closeSheet,
  music(){S.music=!S.music;save();S.music?musOn():musOff();topUI();if(tab=='me')V.me()},
  async install(){if(dip){const p=dip;dip=null;p.prompt();try{await p.userChoice}catch{}topUI();return}
