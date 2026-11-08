@@ -3,6 +3,7 @@
    - Iframe được dựng cao hơn khung nhìn (dư phía trên và dưới), khung .vb cắt phần dư → tiêu đề, avatar kênh, logo, "Video khác"
      của YouTube nằm ngoài vùng nhìn thấy (xem fit()).
    - Điều khiển riêng của app: chạm để phát/tạm dừng, thanh tua, phụ đề (bật/tắt, ngôn ngữ, cỡ chữ), tốc độ, chất lượng, phóng to.
+   Tuỳ chọn crop:false → giữ NGUYÊN khung YouTube (không cắt phần dư), dùng cho mục Học Tiếng Anh Qua Phim.
    Cách dùng: vp=new VPlayer(khungVb,{toast}); vp.attach(ytPlayer) khi onReady; vp.state(s) khi onStateChange; vp.error(c); vp.api(). */
 
 const RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -74,14 +75,15 @@ export class VPlayer {
   isFs() { const v = this.vb; return v.classList.contains('fs') || (document.fullscreenElement || document.webkitFullscreenElement) === v }
   fit() {
     const f = this.vb.querySelector('iframe'); if (!f) return;
-    const S = this.cc ? Math.round(Math.min(100, Math.max(72, this.vb.clientWidth * .19))) : 0;
+    const nc = this.o.crop === false;   /* nc = KHÔNG cắt khung: iframe đúng bằng khung video, không dư trên/dưới, không dải đen riêng cho phụ đề (phụ đề YouTube hiện ngay trên hình) */
+    const S = this.cc && !nc ? Math.round(Math.min(100, Math.max(72, this.vb.clientWidth * .19))) : 0;
     /* Khung nhỏ (không toàn màn hình): chiều cao theo tỉ lệ khung = video + dải phụ đề. Toàn màn hình thì CSS tự đặt cỡ. */
     if (!this.isFs()) { const ar = S && this.vb.clientWidth ? this.vb.clientWidth + '/' + Math.round(this.vb.clientWidth / this.ratio + S) : ''; if (this._ar !== ar) { this._ar = ar; this.vb.style.aspectRatio = ar } }
     else if (this._ar) { this._ar = ''; this.vb.style.aspectRatio = '' }
     const W = this.vb.clientWidth, H = this.vb.clientHeight; if (!W || !H) return;
     let vh = Math.min(W / this.ratio, H - S), vw = vh * this.ratio;
     if (vh <= 0) return;
-    const y0 = (H - vh - S) / 2, pad = S || Math.round(Math.max(96, vh * .45)), k = [W, H, S].join('x');
+    const y0 = (H - vh - S) / 2, pad = nc ? 0 : S || Math.round(Math.max(96, vh * .45)), k = [W, H, S].join('x');
     if (f._k === k) return; f._k = k;
     f.style.cssText = `left:${(W - vw) / 2}px;top:${y0 - pad}px;width:${vw}px;height:${vh + 2 * pad}px`;
     this.tm.style.height = S && y0 > .5 ? Math.ceil(y0) + 'px' : '0';

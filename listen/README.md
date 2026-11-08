@@ -1,6 +1,6 @@
 # Thư mục tab Nghe
 
-Tab Nghe có 2 mục: **`q/`** = Luyện nghe 5 phút (45 video) và **`t/`** = Luyện nghe sâu (47 video). Mỗi video trong playlist có một file nội dung: `q/NN.txt` hoặc `t/NN.txt`, trong đó **NN là thứ tự video trong playlist** (01 = video đầu tiên, 02 = video thứ hai…). App tự hiện nội dung tương ứng khi video chạy tới đó. Không có file thì app báo "Chưa có nội dung".
+Tab Nghe có 3 mục: **`q/`** = Luyện nghe 5 phút (45 video), **`t/`** = Luyện nghe sâu (47 video) và **`p/`** = Học Tiếng Anh Qua Phim (playlist đang cập nhật; chưa có file thì app tự ẩn khung Nội dung). Mỗi video trong playlist có một file nội dung: `q/NN.txt` hoặc `t/NN.txt`, trong đó **NN là thứ tự video trong playlist** (01 = video đầu tiên, 02 = video thứ hai…). App tự hiện nội dung tương ứng khi video chạy tới đó. Không có file thì app báo "Chưa có nội dung".
 
 Định dạng `.txt` (UTF-8):
 - Dòng trống = xuống đoạn mới.

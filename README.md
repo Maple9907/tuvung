@@ -22,7 +22,8 @@
 
 ## Nghe
 
-- Hai mục: **Nghe 5 phút** (45 video) và **Nghe sâu** (47 video). App nhớ video đang nghe của từng mục.
+- Vào tab Nghe là thấy màn hình **chọn mục** với 3 thẻ lớn: **Nghe 5 phút** (45 video), **Nghe sâu** (47 video) và **Học Tiếng Anh Qua Phim** (Bài 1 – Bài N, playlist vẫn đang được cập nhật nên số bài tự tăng theo YouTube). Chạm một thẻ mới mở màn hình phát video; nút **‹ Danh mục** (hoặc chạm lại tab Nghe) để quay về chọn mục. App nhớ video đang nghe của từng mục và hiện “Tiếp tục: Bài X” trên thẻ.
+- Mục **Học Tiếng Anh Qua Phim** giữ **nguyên khung video** (không cắt bớt phần dư của YouTube như hai mục kia). Mục này chưa có chữ bên dưới; muốn thêm thì tạo file `listen/p/NN.txt` (NN = thứ tự video), khi đó khung **Nội dung** sẽ tự hiện.
 - Chữ của video hiện bên dưới, dòng đang nói được tô sáng và tự cuộn theo. Chạm vào giờ ở đầu dòng để tua video tới câu đó.
 - Chạm vào một từ tiếng Anh để nghe phát âm.
 - Nút **Ẩn/Hiện** để nghe trước, xem chữ sau. Nút **Tự cuộn** để bật/tắt cuộn theo video.

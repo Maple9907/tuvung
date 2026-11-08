@@ -187,3 +187,19 @@ body.vfs nav,body.vfs #top{display:none}
 body.vfs #app{z-index:30;top:0;bottom:0}
 .vb.fs{position:fixed;left:0;top:0;width:100vw;height:100vh;height:100dvh;max-height:none;aspect-ratio:auto;border-radius:0;margin:0;z-index:40}
 @media (orientation:portrait){.vb.fs{width:100vh;width:100dvh;height:100vw;transform-origin:0 0;transform:translateX(100vw) rotate(90deg)}}
+
+/* Tab Nghe — màn hình chọn mục (3 thẻ lớn) + hàng quay lại ở màn hình phát */
+.nmh{margin:-4px 0 14px}
+.nmc{position:relative;display:flex;align-items:center;gap:14px;width:100%;margin:0 0 12px;padding:16px 14px 16px 16px;text-align:left;color:var(--t);border-radius:22px;border:1px solid rgba(var(--nc),.45);background:linear-gradient(135deg,rgba(var(--nc),.26),rgba(24,32,66,.72) 62%);box-shadow:0 6px 22px rgba(0,0,0,.25);min-height:112px;overflow:hidden;transition:transform .12s}
+.nmc:active{transform:scale(.98)}
+.nmi{flex:none;width:68px;height:68px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:34px;background:rgba(var(--nc),.3);border:1px solid rgba(var(--nc),.55)}
+.nmb{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.nmt{font-size:19px;line-height:1.2;font-weight:700}
+.nms{font-size:13px;color:var(--m);line-height:1.3}
+.nmn{font-size:12.5px;color:var(--m);font-variant-numeric:tabular-nums}
+.nmp{display:block;height:5px;margin-top:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.nmp i{display:block;height:100%;border-radius:3px;background:rgb(var(--nc))}
+.nmr{font-size:13px;font-weight:600;color:rgb(var(--nc));margin-top:2px}
+.nma{flex:none;font-size:30px;line-height:1;color:var(--m);padding-right:2px}
+.nbk{margin-bottom:10px;justify-content:flex-start;gap:10px}
+.nbt{font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
