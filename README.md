@@ -5,6 +5,7 @@
 ## Học từ vựng
 
 - 5.000 từ thông dụng từ A1 đến C1, có phiên âm, nghĩa tiếng Việt, câu ví dụ và bản dịch.
+- Mỗi từ có câu ví dụ kèm bản dịch; chạm nút 🔊 cạnh câu ví dụ để nghe đọc cả câu (ở thẻ học từ mới và màn hình kết quả sau mỗi câu trả lời).
 - Flashcard: chạm để lật thẻ, nghe phát âm. App tự xếp lịch ôn lại đúng lúc bạn sắp quên.
 - Từ mới được kiểm tra ngay, trả lời đúng 2 lần thì vào lịch ôn.
 - Tự chọn cấp độ muốn học, số từ mới mỗi ngày, giọng đọc Anh hoặc Mỹ, bật/tắt tự động đọc khi học.
