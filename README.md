@@ -26,6 +26,7 @@
 - Mục **Học Tiếng Anh Qua Phim** giữ **nguyên khung video** (không cắt bớt phần dư của YouTube như hai mục kia). Mục này chưa có chữ bên dưới; muốn thêm thì tạo file `listen/p/NN.txt` (NN = thứ tự video), khi đó khung **Nội dung** sẽ tự hiện.
 - Chữ của video hiện bên dưới, dòng đang nói được tô sáng và tự cuộn theo. Chạm vào giờ ở đầu dòng để tua video tới câu đó.
 - Chạm vào một từ tiếng Anh để nghe phát âm.
+- **Luyện theo track**: video nào có các dòng tiêu đề `# Track N` / `# Exercise N` trong file chữ thì hiện thẻ **🎯 Luyện theo track**. Chạm **Chọn track** → chọn một track trong danh sách (kèm giờ bắt đầu – kết thúc) để chỉ nghe đoạn đó, các chữ ngoài track được ẩn đi. Khi hết track, nút chế độ (🔁 / ⏭ / ⏹, chạm để đổi, được nhớ) quyết định: **Lặp track** (có đếm “Lần N”) · **Tự qua track kế** · **Dừng khi hết track** (tua về đầu track, bấm phát để nghe lại). Dải nhỏ dưới video có ‹ › để chuyển track và ✕ để nghe cả video; nút ⏮ ⏭ trên thông báo khoá màn hình cũng chuyển track khi đang ở chế độ này. Tua ra ngoài track hoặc đổi video thì tự thoát chế độ. Video không có tiêu đề track thì thẻ này tự ẩn. Ranh giới track lấy từ giờ chuẩn của dòng `# ...` nên muốn thêm/sửa track chỉ cần sửa file `.txt`.
 - Nút **Ẩn/Hiện** để nghe trước, xem chữ sau. Nút **Tự cuộn** để bật/tắt cuộn theo video.
 - Giờ có dấu ~ là giờ ước lượng nên có thể lệch vài giây; chạm vào giờ ở đầu dòng để tua tới câu đó.
 - Khung video chỉ có video, không hiện tiêu đề hay gợi ý của YouTube:

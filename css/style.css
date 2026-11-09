@@ -177,6 +177,15 @@ h2{overflow-wrap:anywhere}
 .ln.on .ts{color:var(--t)}
 .lbar{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}.ls{font-size:12.5px;margin:0 0 8px}
 .hb.on{background:rgba(124,156,255,.35);border-color:var(--p)}
+/* Chế độ track (tab Nghe) */
+.tks{display:flex;align-items:center;gap:6px;margin-top:8px}.tks .x{flex:none;width:34px;height:34px;font-size:15px;padding:0}.tkc{flex:1;min-width:0;line-height:1.25}.tkc b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tkc .m{font-size:12px;white-space:nowrap}.tkc b .m{font-weight:400}
+.x:disabled{opacity:.35;cursor:default}
+.ln.trx{display:none}
+.tkl{display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow:auto;margin:10px 0 4px;overscroll-behavior:contain}
+.tki{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 12px;border-radius:12px;border:1px solid var(--b);background:rgba(255,255,255,.06);color:var(--t);font-size:15px}
+.tki>b{flex:none;min-width:28px;height:28px;padding:0 4px;border-radius:14px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:12.5px}
+.tki .tkt{display:block;font-weight:600}.tki .m{display:block;font-size:12.5px}
+.tki.cur{border-color:var(--p)}.tki.on{background:rgba(124,156,255,.3);border-color:var(--p)}
 .tw{border-radius:4px}.tw:active{background:rgba(124,156,255,.35)}
 
 /* Phóng to video: Fullscreen API (Android/iPad) hoặc, nếu không có (iPhone), phủ kín màn hình bằng CSS và xoay ngang khi máy đang dọc */
