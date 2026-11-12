@@ -105,9 +105,12 @@ mark{background:none;color:var(--y);font-weight:700}
 
 /* Bảng xếp hạng: chống vỡ dòng khi tên dài / Lv cao / XP lớn */
 .lb{gap:6px;overflow:hidden}
-.lb .rk,.lb .you,.lb .lvb,.lb .xpv{flex:none;white-space:nowrap}
+.lb .rk,.lb .you,.lb .lvb,.lb .stv{flex:none;white-space:nowrap}
+.lb .rk{min-width:1.9em}
 .lb .nn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lb .xpv{margin-left:auto;padding-left:6px;font-variant-numeric:tabular-nums}
+.lb .lvb{margin-left:auto;min-width:6.4em;text-align:right;font-variant-numeric:tabular-nums}
+.lb .stv{min-width:3.6em;text-align:right;font-variant-numeric:tabular-nums}
+.lb.lbh{font-size:12px;padding-top:0}
 .lb.me{color:var(--y)}
 h2{overflow-wrap:anywhere}
 
