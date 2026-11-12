@@ -103,15 +103,29 @@ mark{background:none;color:var(--y);font-weight:700}
 .link{background:none;border:0;color:var(--p);padding:8px 4px;font-size:14px;text-decoration:underline;text-underline-offset:3px}
 .btn:disabled{opacity:.6;cursor:default}
 
-/* Bảng xếp hạng: chống vỡ dòng khi tên dài / Lv cao / XP lớn */
-.lb{gap:6px;overflow:hidden}
-.lb .rk,.lb .you,.lb .lvb,.lb .stv{flex:none;white-space:nowrap}
-.lb .rk{min-width:1.9em}
-.lb .nn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lb .lvb{margin-left:auto;min-width:6.4em;text-align:right;font-variant-numeric:tabular-nums}
-.lb .stv{min-width:3.6em;text-align:right;font-variant-numeric:tabular-nums}
-.lb.lbh{font-size:12px;padding-top:0}
-.lb.me{color:var(--y)}
+/* Bảng xếp hạng: một lưới chung cho mọi dòng (hàng dùng display:contents) nên cột tự co theo ô rộng nhất,
+   các dòng luôn thẳng cột dù Lv/chuỗi có 1–4 chữ số. Cột Tên chiếm phần còn lại và cắt "…"; huy hiệu "bạn" không bao giờ bị cắt. */
+.lbt{display:grid;grid-template-columns:max-content minmax(4.5em,1fr) max-content max-content;column-gap:0;align-items:stretch;overflow:hidden;font-size:15px}
+.lbr{display:contents}
+.lbr>*{padding:9px 0;border-bottom:1px solid var(--b);min-width:0}
+.lbr>*+*{padding-left:12px}
+.lbr:last-child>*{border-bottom:0}
+.lbt .r{text-align:right}
+.lbh>*{padding-top:0;padding-bottom:6px;font-size:12px}
+.lbt .rk{display:flex;align-items:center;justify-content:flex-end;min-width:1.3em;font-variant-numeric:tabular-nums;color:var(--m)}
+.lbt .t1 .rk{color:#ffd166;font-weight:700}.lbt .t2 .rk{color:#d5dcf2;font-weight:700}.lbt .t3 .rk{color:#e0966a;font-weight:700}
+.lbt .nm{display:flex;align-items:center;gap:6px}
+.lbt .nm bdi{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lbt .you{flex:none;font-style:normal;font-size:11px;line-height:1;padding:3px 7px;border-radius:99px;background:rgba(255,209,102,.16);color:var(--y)}
+.lbt .lv{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;line-height:1.15;white-space:nowrap;font-variant-numeric:tabular-nums;
+ background:linear-gradient(var(--p),var(--p)) left bottom/var(--pc) 2px no-repeat;background-clip:padding-box}
+.lbt .lv b{font-weight:600}.lbt .lv small{font-size:11px;color:var(--m)}
+.lbt .sk{display:flex;align-items:center;justify-content:flex-end;gap:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lbt .sk i{font-style:normal;font-size:14px}
+.lbt .sk b{min-width:1ch;text-align:right}
+.lbt .me>*{background-color:rgba(255,209,102,.07);color:var(--y)}
+.lbt .me>:first-child{border-radius:10px 0 0 10px;padding-left:6px}
+.lbt .me>:last-child{border-radius:0 10px 10px 0;padding-right:6px}
 h2{overflow-wrap:anywhere}
 
 /* Tab Nghe: video dính ở trên, nội dung cuộn bên dưới. Video dọc 9:16 thì đổi --vr thành 9/16 */
